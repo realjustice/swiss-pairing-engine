@@ -11,6 +11,7 @@ type TournamentParameterSet struct {
 	generalParameterSet   *GeneralParameterSet
 	pairingParameterSet   *PairingParameterSet
 	placementParameterSet *PlacementParameterSet
+	handicapParameterSet  *HandicapParameterSet
 }
 
 func NewTournamentParameterSet() *TournamentParameterSet {
@@ -18,6 +19,7 @@ func NewTournamentParameterSet() *TournamentParameterSet {
 	set.generalParameterSet = NewGeneralParameterSet()
 	set.pairingParameterSet = NewPairingParameterSet()
 	set.placementParameterSet = NewPlacementParameterSet()
+	set.handicapParameterSet = NewHandicapParameterSet()
 	return set
 }
 
@@ -33,6 +35,18 @@ func (t *TournamentParameterSet) GetPairingParameterSet() *PairingParameterSet {
 	return t.pairingParameterSet
 }
 
+// 瑞士制编排初始化
 func (t *TournamentParameterSet) InitForSwiss() {
+	t.generalParameterSet.InitSwiss()
 	t.placementParameterSet.InitForSwiss()
+	t.handicapParameterSet.InitForSwiss()
+	t.pairingParameterSet.InitForSwiss()
+}
+
+func (t *TournamentParameterSet) SetGeneralParameterSet(set *GeneralParameterSet) {
+	t.generalParameterSet = set
+}
+
+func (t *TournamentParameterSet) GetHandicapParameterSet() *HandicapParameterSet {
+	return t.handicapParameterSet
 }

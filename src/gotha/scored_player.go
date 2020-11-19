@@ -12,6 +12,8 @@ const (
 	PAIRED       = 1
 )
 
+type ScoredPlayers []*ScoredPlayer
+
 type ScoredPlayer struct {
 	*Player
 	NumberOfGroups int // 分组数量 Very redundant
@@ -47,7 +49,7 @@ func NewScoredPlayer(gps *parameter_set.GeneralParameterSet, player *Player) *Sc
 	this := &ScoredPlayer{}
 	this.Player = deepCopyPlayer(player)
 	this.generalParameterSet = gps
-	numberOfRounds := 0
+	numberOfRounds := gps.GetNumberOfRounds()
 	this.participation = make([]int, numberOfRounds)
 	this.gameArray = make([]*Game, numberOfRounds)
 
@@ -76,15 +78,36 @@ func NewScoredPlayer(gps *parameter_set.GeneralParameterSet, player *Player) *Sc
 // 获取标准数据
 func (sp *ScoredPlayer) GetCritValue(criterion int, roundNumber int) int {
 	switch criterion {
+	case parameter_set.PLA_CRIT_NUL:
+		return 0
+	case parameter_set.PLA_CRIT_RATING:
+		return sp.GetRating()
 	case parameter_set.PLA_CRIT_NBW:
 		if roundNumber >= 0 {
 			return sp.nbwX2[roundNumber]
 		} else {
 			return 0
 		}
+	case parameter_set.PLA_CRIT_SOSW:
+		if roundNumber >= 0 {
+			return sp.soswX2[roundNumber]
+		} else {
+			return 0
+		}
+	case parameter_set.PLA_CRIT_SOSOSW:
+		if roundNumber >= 0 {
+			return sp.ssswX2[roundNumber]
+		} else {
+			return 0
+		}
+
 	default:
 		return 0
 	}
+}
+
+func (sp *ScoredPlayer) GetRating() int {
+	return sp.Rating
 }
 
 func (sp *ScoredPlayer) SetParticipation(rn int, participation int) {
@@ -197,5 +220,3 @@ func (sp *ScoredPlayer) SetSOSWM2X2(rn int, value int) {
 		sp.soswM2X2[rn] = value
 	}
 }
-
-

@@ -2,10 +2,15 @@ package gotha
 
 import . "tournament_pair/src/parameter_set"
 
+const (
+	MAX_NUMBER_OF_ROUNDS = 20
+)
+
 type Gotha struct {
+	tournament *Tournament
 }
 
-func NewGotha(tournament *Tournament) *Gotha {
+func NewGotha() *Gotha {
 	gotha := new(Gotha)
 	return gotha
 }
@@ -18,4 +23,16 @@ func (g *Gotha) SelectSystem(system int) {
 	case TYPE_SWISS:
 		tps.InitForSwiss()
 	}
+	g.tournament.SetTournamentSet(tps)
+}
+
+func (g *Gotha) GetFromXMLFile(filePath string) {
+	input := NewInput()
+	input.WithOption(WithPlayers())
+	g.tournament = NewTournament()
+	input.ImportTournamentFromXMLFile(filePath, g.tournament)
+}
+
+func (g *Gotha) GetTournament() *Tournament {
+	return g.tournament
 }

@@ -7,13 +7,14 @@ import (
 )
 
 type Player struct {
-	Player    xml.Name `xml:"Player"`
-	Name      string   `xml:"name,attr"`
-	Rating    int      `xml:"rating,attr"`
-	rank      int      `xml:"rank,attr"`
-	keyString string
+	Player           xml.Name `xml:"Player"`
+	Name             string   `xml:"name,attr"`
+	Rating           int      `xml:"rating,attr"`
+	Rank             int
+	ParticipatingStr string `xml:"participatingStr,attr"`
+	keyString        string
 	// 记录每一轮是否参与编排
-	Participating []bool
+	participating []bool
 }
 
 func NewPlayer() *Player {
@@ -21,7 +22,7 @@ func NewPlayer() *Player {
 }
 
 func (p *Player) Category(gps *parameter_set.GeneralParameterSet) int {
-	return 1
+	return 0
 }
 
 func (p *Player) SetKeyString() string {
@@ -35,8 +36,8 @@ func deepCopyPlayer(player *Player) *Player {
 }
 
 func (p *Player) GetParticipating() []bool {
-	copyParticipating := make([]bool, len(p.Participating))
-	copy(copyParticipating, p.Participating)
+	copyParticipating := make([]bool, len(p.participating))
+	copy(copyParticipating, p.participating)
 	return copyParticipating
 }
 
@@ -59,6 +60,17 @@ func (p *Player) GetKeyString() string {
 	return p.keyString
 }
 
+func (p *Player) SetRank(rating int) {
+	rank := rankFromRating(rating)
+	p.Rank = rank
+}
+
 func (p *Player) GetRank() int {
-	return p.rank
+	return p.Rank
+}
+
+func (p *Player) SetParticipating(val []bool) {
+	newVal := make([]bool, len(val))
+	copy(newVal, val)
+	p.participating = newVal
 }

@@ -1,7 +1,7 @@
 package gotha
 
 import (
-	"tournament_pair/src"
+	"sort"
 	"tournament_pair/src/parameter_set"
 )
 
@@ -22,14 +22,14 @@ type Tournament struct {
 	byePlayers []*Player
 }
 
-func NewTournament(players []Player) *Tournament {
-	t := &Tournament{}
+func NewTournament() *Tournament {
+	t := new(Tournament)
+	t.tournamentParameterSet = parameter_set.NewTournamentParameterSet()
 	// 添加报名人员
 	t.hmPlayers = make(map[string]*Player)
-	t.AddPlayer(players)
 
 	t.hmGames = make(map[string]*Game)
-	t.byePlayers = make([]*Player, src.MAX_NUMBER_OF_ROUNDS)
+	t.byePlayers = make([]*Player, MAX_NUMBER_OF_ROUNDS)
 
 	return t
 }
@@ -37,22 +37,26 @@ func NewTournament(players []Player) *Tournament {
 func (t *Tournament) GetTournamentSet() *parameter_set.TournamentParameterSet {
 	return t.tournamentParameterSet
 }
+func (t *Tournament) SetTournamentSet(set *parameter_set.TournamentParameterSet) {
+	t.tournamentParameterSet = set
+}
 
-func (t *Tournament) AddPlayer(players []Player) {
-	for _, player := range players {
-		t.hmPlayers[player.SetKeyString()] = &player
+func (t *Tournament) AddPlayer(players []*Player) {
+	for _, p := range players {
+		t.hmPlayers[p.SetKeyString()] = p
 	}
 }
 
 func (t *Tournament) FillPairingInfo(roundNumber int) {
-	gps := parameter_set.NewGeneralParameterSet()
-	pps := parameter_set.NewPlacementParameterSet()
-	paiPs := parameter_set.NewPairingParameterSet()
+	gps := t.tournamentParameterSet.GetGeneralParameterSet()
+	pps := t.tournamentParameterSet.GetPlacementParameterSet()
+	paiPs := t.tournamentParameterSet.GetPairingParameterSet()
+
 	mainScoreMin := 0
 	mainScoreMax := 0
 	groupNumber := 0 // 有几轮就有几个groupNumber
 
-	for cat := 0; cat < gps.NumberOfCategories; cat++ {
+	for cat := 0; cat < gps.GetNumberOfCategories(); cat++ {
 		for mainScore := mainScoreMax; mainScore >= mainScoreMin; mainScore-- {
 			alSPGroup := make([]*ScoredPlayer, 0)
 			for _, sp := range t.hmScoredPlayers {
@@ -70,19 +74,22 @@ func (t *Tournament) FillPairingInfo(roundNumber int) {
 			if len(alSPGroup) <= 0 {
 				continue
 			}
+			// 压入一个规则，（第一轮的时候增加rating规则，其余情况不压入规则！！）
 			crit := pps.GetPlaCriteria()
-			additionalCrit := paiPs.PaiMaAdditionalPlacementCritSystem1
-			// todo 种子
+			additionalCrit := paiPs.GetPaiMaAdditionalPlacementCritSystem1()
+			if roundNumber > paiPs.GetPaiMaLastRoundForSeedSystem1() {
+				additionalCrit = paiPs.GetPaiMaAdditionalPlacementCritSystem2()
+			}
 
 			paiCrit := make([]int, len(crit)+1)
 			copy(crit, paiCrit)
 			paiCrit[len(paiCrit)-1] = additionalCrit
-			// todo sort very important
+			// 根据规则排序
+			spc := NewScoredPlayerComparator(alSPGroup, paiCrit, roundNumber-1)
+			sort.Sort(spc)
 
-			// groupNumber 所记录的就是最后一次的获胜轮次
-			//
 			for index, sp := range alSPGroup {
-				sp.GroupNumber = groupNumber
+				sp.GroupNumber = groupNumber // 所记录的就是最后一轮全胜轮次
 				sp.GroupSize = len(alSPGroup)
 				sp.InnerPlacement = index
 			}
@@ -108,7 +115,7 @@ func (t *Tournament) FillPairingInfo(roundNumber int) {
 	}
 }
 
-func (t *Tournament) MakeAutomaticPairing(alPlayersToPair []Player, roundNumber int) ([]Game, bool) {
+func (t *Tournament) MakeAutomaticPairing(alPlayersToPair []*Player, roundNumber int) ([]*Game, bool) {
 	// not even
 	if len(alPlayersToPair)%2 != 0 {
 		return nil, false
@@ -117,22 +124,22 @@ func (t *Tournament) MakeAutomaticPairing(alPlayersToPair []Player, roundNumber 
 	t.fillBaseScoringInfoIfNecessary()
 
 	// todo getGamesListBefore()
-	//alPreviousGames := t.gamesListBefore(roundNumber)
+	alPreviousGames := t.gamesListBefore(roundNumber)
 
 	// fill pairing info
 	t.FillPairingInfo(roundNumber)
 
 	// todo 大于300人的比赛暂未处理
 
-	// fillPairingInfo
+	alRemainingPlayers := make([]*Player, len(alPlayersToPair))
+	copy(alRemainingPlayers, alPlayersToPair)
 
-	alGames := make([]Game, 0)
-	alg := make([]Game, 0)
-
+	alg := t.pairAGroup(alRemainingPlayers, roundNumber, t.hmScoredPlayers, alPreviousGames)
+	alGames := make([]*Game, len(alg))
 	// fill game
 	copy(alGames, alg)
 
-	return alGames, false
+	return alGames, true
 }
 
 func (t *Tournament) fillBaseScoringInfoIfNecessary() {
@@ -148,6 +155,7 @@ func (t *Tournament) fillBaseScoringInfoIfNecessary() {
 
 	// 1) participation 编排状态
 	// ****************
+
 	// 初始化编排状态
 	for _, sp := range t.hmScoredPlayers {
 		for r := 0; r < numberOfRoundsToCompute; r++ {
@@ -190,7 +198,7 @@ func (t *Tournament) fillBaseScoringInfoIfNecessary() {
 		}
 	}
 
-	// 2) nbwX2  (计算总分？)
+	// 2) nbwX2  (计算总分)
 	for r := 0; r < numberOfRoundsToCompute; r++ {
 		// Initialize
 		for _, sp := range t.hmScoredPlayers {
@@ -236,15 +244,6 @@ func (t *Tournament) fillBaseScoringInfoIfNecessary() {
 				sp.SetNBWX2(r, sp.GetNBWX2(r)+nbPtsNBW2AbsentOrBye)
 			}
 
-		}
-
-		// 3) CUSSW 计算每一轮的总分之和
-		for _, sp := range t.hmScoredPlayers {
-			sp.SetCUSWX2(0, sp.GetNBWX2(0))
-			for r := 1; r < numberOfRoundsToCompute; r++ {
-				// 之前轮次的总分+ 本轮大分
-				sp.SetCUSWX2(r, sp.GetCUSWX2(r-1)+sp.GetNBWX2(r))
-			}
 		}
 
 		// 4.1) SOSW, SOSWM1, SOSWM2,SODOSW
@@ -322,7 +321,7 @@ func (t *Tournament) fillBaseScoringInfoIfNecessary() {
 			}
 		}
 
-		// 5) ssswX2 Sum of opponents sosw2 * 2 对手的SOSW总和
+		// 5) ssswX2(对应sososwX2)  Sum of opponents sosw2 * 2 对手的SOSW总和
 		for r := 0; r < numberOfRoundsToCompute; r++ {
 			for _, sp := range t.hmScoredPlayers {
 				sososwX2 := 0
@@ -344,66 +343,6 @@ func (t *Tournament) fillBaseScoringInfoIfNecessary() {
 					}
 				}
 				sp.SetSSSWX2(r, sososwX2)
-			}
-		}
-
-		// 6)  EXT EXR 额外字段？
-		for r := 0; r < numberOfRoundsToCompute; r++ {
-			for _, sp := range t.hmScoredPlayers {
-				extX2 := 0
-				exrX2 := 0
-				for rr := 0; rr <= r; rr++ {
-					// 未匹配状态下不用计算
-					if sp.GetParticipation(rr) != PAIRED {
-						continue
-					}
-					g := sp.GetGame(rr)
-					opp := NewPlayer()
-					spWasWhite := false // 是否执白
-					if g.GetWhitePlayer().HasSameKeyString(sp.Player) {
-						opp = g.GetBlackPlayer()
-						spWasWhite = true
-					} else {
-						opp = g.GetWhitePlayer()
-						spWasWhite = false
-					}
-					sOpp := t.hmScoredPlayers[opp.GetKeyString()]
-					// 保存handicap
-					realHd := g.GetHandicap()
-					if !spWasWhite {
-						realHd = -realHd
-					}
-					naturalHd := sp.GetRank() - sOpp.GetRank()
-					coef := 0
-					if realHd-naturalHd <= 0 {
-						coef = 0
-					}
-					if realHd-naturalHd == 0 {
-						coef = 1
-					}
-					if realHd-naturalHd == 1 {
-						coef = 2
-					}
-					if realHd-naturalHd >= 2 {
-						coef = 3
-					}
-
-					extX2 += sOpp.GetNBWX2(r) * coef
-					bWin := false
-					if spWasWhite && (g.GetResult() == RESULT_WHITEWINS || g.GetResult() == RESULT_WHITEWINS_BYDEF ||
-						g.GetResult() == RESULT_BOTHWIN || g.GetResult() == RESULT_BOTHWIN_BYDEF) {
-						bWin = true
-					}
-					if !spWasWhite && (g.GetResult() == RESULT_BLACKWINS || g.GetResult() == RESULT_BLACKWINS_BYDEF ||
-						g.GetResult() == RESULT_BOTHWIN || g.GetResult() == RESULT_BOTHWIN_BYDEF) {
-						bWin = true
-					}
-					if bWin {
-						exrX2 += sOpp.GetNBWX2(r) * coef
-					}
-				}
-				sp.SetEXTX2(r, extX2)
-				sp.SetEXTX2(r, exrX2)
 			}
 		}
 	}
@@ -471,13 +410,6 @@ func getWX2(g *Game, p *Player) int {
 	return wX2
 }
 
-func max(a int, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 func (t *Tournament) gamesListBefore(roundNumber int) []*Game {
 	gL := make([]*Game, 0)
 	for _, g := range t.hmGames {
@@ -488,32 +420,50 @@ func (t *Tournament) gamesListBefore(roundNumber int) []*Game {
 	return gL
 }
 
-func (t *Tournament) pairAGroup(alGroupedPlayers []*Player, roundNumber int, hmScoredPlayers map[string]*ScoredPlayer, alPreviousGames []*Game) {
+func (t *Tournament) pairAGroup(alGroupedPlayers []*Player, roundNumber int, hmScoredPlayers map[string]*ScoredPlayer, alPreviousGames []*Game) []*Game {
 	// 分组数量
 	numberOfPlayersInGroup := len(alGroupedPlayers)
-	//      Prepare infos about Score groups : sgSize, sgNumber and innerPosition
-	//      And DUDD information
 
+	//  Prepare infos about Score groups : sgSize, sgNumber and innerPosition
+	//  And DUDD information
 	costs := make([][]int64, 0)
 	// 生成一个二维数组，替代java中 long[numberOfPlayersInGroup][numberOfPlayersInGroup]
-	for i := 0; i <= numberOfPlayersInGroup; i++ {
+	for i := 0; i < numberOfPlayersInGroup; i++ {
 		costs = append(costs, make([]int64, numberOfPlayersInGroup))
 	}
 
 	for i := 0; i < numberOfPlayersInGroup; i++ {
 		costs[i][i] = 0
 		for j := i + 1; j < numberOfPlayersInGroup; j++ {
-			//p1 := alGroupedPlayers[i]
-			//p2 := alGroupedPlayers[j]
-			//sP1 := t.hmScoredPlayers[p1.GetKeyString()]
-			//sP2 := t.hmScoredPlayers[p2.GetKeyString()]
-
+			p1 := alGroupedPlayers[i]
+			p2 := alGroupedPlayers[j]
+			sP1 := t.hmScoredPlayers[p1.GetKeyString()]
+			sP2 := t.hmScoredPlayers[p2.GetKeyString()]
+			costs[i][j] = t.costValue(sP1, sP2, roundNumber, alPreviousGames)
+			costs[j][i] = costs[i][j]
 		}
 	}
+
+	//mate := make([]int, 0)
+
+	alG := make([]*Game, 0)
+	for i := 1; i <= len(costs); i++ {
+		//if i < mate[i] {
+		//	p1 := alGroupedPlayers[i-1]
+		//	p2 := alGroupedPlayers[mate[i]-1]
+		//	sP1 := t.hmScoredPlayers[p1.GetKeyString()]
+		//	sP2 := t.hmScoredPlayers[p2.GetKeyString()]
+		//	g :=
+		//	alg := append(alG, g)
+		//}
+
+	}
+
+	return alG
 }
 
-func (t *Tournament) costValue(sP1 *ScoredPlayer, sP2 *ScoredPlayer, roundNumber int, alPreviousGames []*Game) {
-	//gps := t.tournamentParameterSet.GetGeneralParameterSet()
+func (t *Tournament) costValue(sP1 *ScoredPlayer, sP2 *ScoredPlayer, roundNumber int, alPreviousGames []*Game) int64 {
+	gps := t.tournamentParameterSet.GetGeneralParameterSet()
 	paiPS := t.tournamentParameterSet.GetPairingParameterSet()
 	var cost int64 = 1 // 1 is minimum value because 0 means "no matching allowed"
 
@@ -532,29 +482,160 @@ func (t *Tournament) costValue(sP1 *ScoredPlayer, sP2 *ScoredPlayer, roundNumber
 		if sP1.HasSameKeyString(g1.GetBlackPlayer()) && sP2.HasSameKeyString(g1.GetWhitePlayer()) {
 			numberOfPreviousGamesP1P2++
 		}
-		// 如果之前从未匹配过，则会加上一个非常大的权重
-		if numberOfPreviousGamesP1P2 == 0 {
-			cost += paiPS.GetPaiBaAvoidDuplGame()
-		}
-
-		// 增加随机因子
-		//Base Criterion 2 : Random
-		var nR int64
-		if paiPS.IsPaiBaDeterministic() {
-
-		} else {
-
-		}
-		cost += nR
-
-		// Base Criterion 3 : Balance W and B
-		// This cost is never applied if potential Handicap != 0
-		// It is fully applied if wbBalance(sP1) and wbBalance(sP2) are strictly of different signs
-		// It is half applied if one of wbBalance is 0 and the other is >=2
-
-		//var bwBalanceCost int64= 0
-
-		//potHd:=
+	}
+	// 如果之前从未匹配过，则会加上一个非常大的权重
+	if numberOfPreviousGamesP1P2 == 0 {
+		cost += paiPS.GetPaiBaAvoidDuplGame()
 	}
 
+	// 增加随机因子(默认不使用)
+	//Base Criterion 2 : Random
+	var nR int64
+	if paiPS.IsPaiBaDeterministic() {
+
+	} else {
+
+	}
+	cost += nR
+
+	// 黑白平衡
+	// Base Criterion 3 : Balance W and B
+	// This cost is never applied if potential Handicap != 0
+	// It is fully applied if wbBalance(sP1) and wbBalance(sP2) are strictly of different signs
+	// It is half applied if one of wbBalance is 0 and the other is >=2
+
+	var bwBalanceCost int64 = 0
+	g := t.gameBetween(sP1, sP2, roundNumber)
+	poHd := g.GetHandicap()
+	if poHd == 0 {
+		wb1 := wbBalance(sP1, roundNumber-1)
+		wb2 := wbBalance(sP2, roundNumber-1)
+		// 双方都是黑居多
+		if wb1*wb2 < 0 {
+			bwBalanceCost = paiPS.GetPaiBaBalanceWB()
+		} else if wb1 == 0 && abs(wb2) >= 2 {
+			bwBalanceCost = paiPS.GetPaiBaBalanceWB() / 2
+		} else if wb2 == 0 && abs(wb1) >= 2 {
+			bwBalanceCost = paiPS.GetPaiBaBalanceWB() / 2
+		}
+	}
+	cost += bwBalanceCost
+
+	// Main Criterion 2 : Minimize score difference
+	var scoCost int64 = 0
+	scoRange := sP1.NumberOfGroups
+	if sP1.Category(gps) == sP2.Category(gps) {
+		x := float64(abs(sP1.GroupNumber-sP2.GroupNumber)) / float64(scoRange)
+		k := paiPS.GetPaiStandardNX1Factor()
+		scoCost = int64(float64(paiPS.GetPaiMaMinimizeScoreDifference()) * (1.0 - x) * (1.0 + k*x))
+	}
+	cost += scoCost
+	// todo Main Criterion 3 : If different groups, make a directed Draw-up/Draw-down
+
+	// Main Criterion 4 : Seeding
+	var seedCost int64 = 0
+	if sP1.GroupNumber == sP2.GroupNumber {
+		groupSize := int64(sP1.GroupSize)
+		cla1 := int64(sP1.InnerPlacement)
+		cla2 := int64(sP2.InnerPlacement)
+		maxSeedingWeight := paiPS.GetPaiMaMaximizeSeeding()
+		currentSeedSystem := paiPS.GetPaiMaSeedSystem2()
+		if roundNumber <= paiPS.GetPaiMaLastRoundForSeedSystem1() {
+			currentSeedSystem = paiPS.GetPaiMaSeedSystem1()
+		}
+		// select seed system
+		if currentSeedSystem == parameter_set.PAIMA_SEED_SPLITANDRANDOM {
+			// todo 暂时用不到
+
+		} else if currentSeedSystem == parameter_set.PAIMA_SEED_SPLITANDFOLD {
+			// The best is to get cla1 + cla2 - (groupSize - 1) close to 0
+			x := int64(cla1 + cla2 - (groupSize - 1))
+			seedCost = maxSeedingWeight - (maxSeedingWeight * x / (groupSize - 1) * x / (groupSize - 1))
+		} else if currentSeedSystem == parameter_set.PAIMA_SEED_SPLITANDSLIP {
+			// The best is to get 2 * |Cla1 - Cla2| - groupSize    close to 0
+			x := 2*abs64(cla1-cla2) - groupSize
+			seedCost = maxSeedingWeight - (maxSeedingWeight * x / groupSize * x / groupSize)
+		}
+	}
+	cost += seedCost
+
+	return cost
+}
+
+func (t *Tournament) GetPlayers() []*Player {
+	players := make([]*Player, 0)
+	for _, p := range t.hmPlayers {
+		players = append(players, p)
+	}
+	return players
+}
+
+/**
+ * builds and return a new Game with everything defined except tableNumber
+ */
+func (t *Tournament) gameBetween(sP1 *ScoredPlayer, sP2 *ScoredPlayer, roundNumber int) *Game {
+	hdPS := t.tournamentParameterSet.GetHandicapParameterSet()
+	g := NewGame()
+	hd := 0
+	pseudoRank1 := sP1.GetRank()
+	pseudoRank2 := sP2.GetRank()
+	// 取player段位和阈值
+	pseudoRank1 = min(pseudoRank1, hdPS.GetHdNoHdRankThreshold())
+	pseudoRank2 = min(pseudoRank2, hdPS.GetHdNoHdRankThreshold())
+	hd = pseudoRank1 - pseudoRank2
+	if hd > 0 {
+		hd = hd - hdPS.GetHdCorrection()
+		if hd < 0 {
+			hd = 0
+		}
+	}
+
+	if hd < 0 {
+		hd = hd + hdPS.GetHdCorrection()
+		if hd > 0 {
+			hd = 0
+		}
+	}
+
+	if hd > hdPS.GetHdCeiling() {
+		hd = hdPS.GetHdCeiling()
+	}
+	if hd < -hdPS.GetHdCeiling() {
+		hd = -hdPS.GetHdCeiling()
+	}
+
+	p1 := t.GetPlayerByKeyString(sP1.GetKeyString())
+	p2 := t.GetPlayerByKeyString(sP2.GetKeyString())
+
+	if hd > 0 {
+		g.SetWhitePlayer(p1)
+		g.SetBlackPlayer(p2)
+		g.SetHandicap(hd)
+	} else if hd < 0 {
+		g.SetWhitePlayer(p2)
+		g.SetBlackPlayer(p1)
+		g.SetHandicap(-hd)
+	} else {
+		g.SetHandicap(0)
+		if wbBalance(sP1, roundNumber-1) > wbBalance(sP2, roundNumber-1) {
+			g.SetWhitePlayer(p2)
+			g.SetBlackPlayer(p1)
+		} else if wbBalance(sP1, roundNumber-1) > wbBalance(sP2, roundNumber-1) {
+			g.SetWhitePlayer(p1)
+			g.SetBlackPlayer(p2)
+		} else {
+			g.SetWhitePlayer(p2)
+			g.SetBlackPlayer(p1)
+		}
+	}
+
+	g.SetKnownColor(true)
+	g.SetResult(RESULT_UNKNOWN)
+	g.SetRoundNumber(roundNumber)
+
+	return g
+}
+
+func (t *Tournament) GetPlayerByKeyString(strNaFi string) *Player {
+	return t.hmPlayers[strNaFi]
 }

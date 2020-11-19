@@ -1,11 +1,8 @@
 package gotha
 
 const (
-	RESULT_UNKNOWN = 0
-	RESULT_BYDEF   = 2 << 8 // 100000000
-)
-
-const (
+	RESULT_UNKNOWN         = 0
+	RESULT_BYDEF           = 2 << 8 // 100000000
 	RESULT_LOSE            = 2 << 3
 	RESULT_WHITEWINS       = 17
 	RESULT_WHITEWINS_BYDEF = RESULT_WHITEWINS + RESULT_BYDEF
@@ -29,6 +26,10 @@ type Game struct {
 	whitePlayer *Player
 }
 
+func NewGame() *Game {
+	return &Game{}
+}
+
 func (g *Game) GetBlackPlayer() *Player {
 	return g.blackPlayer
 }
@@ -47,4 +48,34 @@ func (g *Game) GetHandicap() int {
 
 func (g *Game) GetRoundNumber() int {
 	return g.RoundNumber
+}
+
+func (g *Game) SetKnownColor(knownColor bool) {
+	g.KnownColor = knownColor
+}
+
+func (g *Game) SetResult(result int) {
+	g.result = result
+}
+
+func (g *Game) SetRoundNumber(roundNumber int) {
+	g.RoundNumber = roundNumber
+}
+
+func (g *Game) SetWhitePlayer(player *Player) {
+	g.whitePlayer = player
+}
+
+func (g *Game) SetBlackPlayer(player *Player) {
+	g.blackPlayer = player
+}
+
+func (g *Game) SetHandicap(val int) {
+	g.handicap = val
+	if g.handicap < 0 {
+		g.handicap = 0
+	}
+	if g.handicap > 9 {
+		g.handicap = 9
+	}
 }
