@@ -6,6 +6,7 @@ import (
 	"github.com/beevik/etree"
 	"io"
 	"strconv"
+	"strings"
 )
 
 type InputOutput struct {
@@ -102,8 +103,8 @@ func (i *InputOutput) importPlayersFromXML() (players []*Player, err error) {
 		p.Name = playerXML.SelectAttrValue("name", "")
 		p.FirstName = playerXML.SelectAttrValue("firstName", "")
 		ratingStr := playerXML.SelectAttrValue("rating", "")
-		// 如果XML中不导入，则随机生成一个16位的随机key
-		p.SetKeyString(playerXML.SelectAttrValue("keyString", ""))
+		// 如果XML中不导入，则根据firstName+name 生成
+		p.SetKeyString(playerXML.SelectAttrValue("keyString", strings.ToUpper(p.Name+p.FirstName)))
 		rating, err := strconv.Atoi(ratingStr)
 		if err != nil {
 			return players, err
