@@ -23,8 +23,8 @@ func main() {
 	player1.SetName("Karadaban")
 	player1.SetFirstName("Denis")
 	player1.SetKeyString(strings.ToUpper(player1.Name + player1.FirstName))
-	player1.SetParticipating([]bool{true, true, true, true, true, true, true}) // 是否参与每一轮的编排
-	player1.SetRank(2253)                                                      // 积分
+	player1.SetParticipatingStr("111111111111111") // 是否参与每一轮的编排
+	player1.SetRank(2253)
 	tournament.AddPlayer(player1)
 
 	// white
@@ -32,7 +32,8 @@ func main() {
 	player2.SetName("Wu")
 	player2.SetFirstName("Beilun")
 	player2.SetKeyString(strings.ToUpper(player2.Name + player2.FirstName))
-	player2.SetParticipating([]bool{true, true, true, true, true, true, true})
+	player2.SetParticipatingStr("111111111111111") // 是否参与每一轮的编排
+
 	player2.SetRank(1961)
 	tournament.AddPlayer(player2)
 
@@ -54,7 +55,6 @@ func main() {
 
 	g.SetTournament(tournament)
 	t := g.GetTournament()
-
 	g.SelectSystem(*system)
 
 	// Step4 choose the players （via keyString）

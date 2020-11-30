@@ -91,7 +91,6 @@ func (i *InputOutput) ImportFromReader(ri io.Reader, t *Tournament) error {
 }
 
 func (i *InputOutput) importPlayersFromXML() (players []*Player, err error) {
-	participating := make([]bool, MAX_NUMBER_OF_ROUNDS)
 	players = make([]*Player, 0)
 	playersXML := i.Root.SelectElement("Players")
 	if playersXML == nil {
@@ -110,17 +109,9 @@ func (i *InputOutput) importPlayersFromXML() (players []*Player, err error) {
 			return players, err
 		}
 		p.Rating = rating
-		p.ParticipatingStr = playerXML.SelectAttrValue("participating", "")
+		p.SetParticipatingStr(playerXML.SelectAttrValue("participating", ""))
 		p.SetRank(p.Rating)
-		for i := 0; i < len(p.ParticipatingStr); i++ {
-			if string(p.ParticipatingStr[i]) == "0" {
-				participating[i] = false
-			} else {
-				participating[i] = true
-			}
-		}
-		// 设置本轮是否参与编排
-		p.SetParticipating(participating)
+
 		players = append(players, p)
 	}
 

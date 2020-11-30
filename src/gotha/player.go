@@ -2,6 +2,7 @@ package gotha
 
 import (
 	"github.com/realjustice/swiss-pairing-engine/src/parameter_set"
+	"strings"
 )
 
 type Player struct {
@@ -24,6 +25,9 @@ func (p *Player) Category(gps *parameter_set.GeneralParameterSet) int {
 }
 
 func (p *Player) SetKeyString(keyStr string) string {
+	if keyStr == "" {
+		p.keyString = strings.ToUpper(p.Name + p.FirstName)
+	}
 	p.keyString = keyStr
 	return p.keyString
 }
@@ -71,6 +75,20 @@ func (p *Player) SetParticipating(val []bool) {
 	newVal := make([]bool, len(val))
 	copy(newVal, val)
 	p.participating = newVal
+}
+
+func (p *Player) SetParticipatingStr(val string) {
+	p.ParticipatingStr = val
+	participating := make([]bool, MAX_NUMBER_OF_ROUNDS)
+	for i := 0; i < len(p.ParticipatingStr); i++ {
+		if string(p.ParticipatingStr[i]) == "0" {
+			participating[i] = false
+		} else {
+			participating[i] = true
+		}
+	}
+	// 设置本轮是否参与编排
+	p.SetParticipating(participating)
 }
 
 func (p *Player) SetFirstName(firstName string) {
