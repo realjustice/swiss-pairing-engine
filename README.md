@@ -35,7 +35,7 @@ $ go get -u github.com/realjustice/swiss-pairing-engine
 $ cd example
 ```
 
-####编排并生成对阵
+#### 编排并生成对阵
 
 ```sh
 $ cat example/pair/main.go
@@ -129,7 +129,7 @@ func importFromBytes(filePath string, g *gotha.Gotha) {
 
 ```
 
-####录入结果
+#### 录入结果
 
 ```sh
 $ cat example/record_result/main.go
