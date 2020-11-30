@@ -72,3 +72,11 @@ func (p *Player) SetParticipating(val []bool) {
 	copy(newVal, val)
 	p.participating = newVal
 }
+
+func (p *Player) SetFirstName(firstName string) {
+	p.FirstName = firstName
+}
+
+func (p *Player) SetName(name string) {
+	p.Name = name
+}

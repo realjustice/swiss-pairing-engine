@@ -898,9 +898,15 @@ func (t *Tournament) GetPlayerByKeyString(strNaFi string) *Player {
 	return t.hmPlayers[strNaFi]
 }
 
-func (t *Tournament) SetSelectedPlayers(strNaFis []string) {
-	for _, keyString := range strNaFis {
-		t.selectedPlayers = append(t.selectedPlayers, t.GetPlayerByKeyString(keyString))
+func (t *Tournament) SetSelectedPlayers(strNaFis ...[]string) {
+	if len(strNaFis) == 0 {
+		for _, player := range t.hmPlayers {
+			t.selectedPlayers = append(t.selectedPlayers, player)
+		}
+	} else {
+		for _, keyString := range strNaFis[0] {
+			t.selectedPlayers = append(t.selectedPlayers, t.GetPlayerByKeyString(keyString))
+		}
 	}
 }
 

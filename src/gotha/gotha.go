@@ -63,3 +63,7 @@ func (g *Gotha) ImportFromReader(io io.Reader) error {
 func (g *Gotha) GetTournament() *Tournament {
 	return g.tournament
 }
+
+func (g *Gotha) SetTournament(t *Tournament) {
+	g.tournament = t
+}

@@ -24,58 +24,20 @@ func main() {
 	// Step2 import the data resource
 	// you can import from the xml file
 	filePath := `../demo.xml` //  your file path
-	importFromXMLFile(filePath, g)
+	//importFromXMLFile(filePath, g)
 
 	// or from bytes
 	// importFromBytes(filePath, g)
 
 	// Step3 chose the pair system
 	// Currently only supports Swiss-made arrangements
+
 	g.SelectSystem(*system)
 	t := g.GetTournament()
 
 	// Step4 choose the players （via keyString）
-	t.SetSelectedPlayers([]string{"ARNAUDANCELIN",
-		"AVENELAUGUSTIN",
-		"BILLOIRECLEMENT",
-		"BILLOUETSIMON",
-		"BLANCHARDBENJAMIN",
-		"BUFFARDEMMANUEL",
-		"CANCEPHILIPPE",
-		"COQUELETLAURENT",
-		"CORNUEJOLSDOMINIQUE",
-		"CRUBELLIERETIENNE",
-		"DOUSSOTPATRICE",
-		"FEVRIERLOUIS",
-		"GAUTHIERHENRI",
-		"GRANGERALBAN",
-		"GUENNOUMORAN",
-		"GUEVELBRENDAN",
-		"HENRYYANNIS",
-		"HWANGIN-SEONG",
-		"IMAMURA-CORNUEJOLSTORU",
-		"KARADABANDENIS",
-		"KUNNESTÉPHAN",
-		"LE_BROUSTERREMI",
-		"LE_CALVÉTANGUY",
-		"LEESEMI",
-		"LIHAOHAN",
-		"MASSONFABIEN",
-		"MIZESSYNFRANÇOIS",
-		"MOSCATELLIALDO",
-		"NADDEFJEAN_LOUP",
-		"NESMEVINCENT",
-		"NGUYENHUU_PHUOC",
-		"PAPAZOGLOUBENJAMIN",
-		"PARCOITDAVID",
-		"PUYAUBREAUNICOLAS",
-		"ROBERTLUDWIG",
-		"TECCHIOPIERRE",
-		"TURLOTQUENTIN",
-		//"VANNIERRÉMI",
-		"WUBEILUN",
-		"WURZINGERRALF"})
-
+	// By default, all players participate in this round
+	t.SetSelectedPlayers([]string{"KARADABANDENIS", "WUBEILUN"})
 	// Step5 pair
 	t.Pair(*round)
 	for _, game := range t.SortGameByTableNumber() {
