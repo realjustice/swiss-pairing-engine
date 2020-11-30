@@ -35,7 +35,7 @@ $ go get -u github.com/realjustice/swiss-pairing-engine
 $ cd example
 ```
 
-编排并生成对阵
+####编排并生成对阵
 
 ```sh
 $ cat example/pair/main.go
@@ -129,7 +129,7 @@ func importFromBytes(filePath string, g *gotha.Gotha) {
 
 ```
 
-录入结果
+####录入结果
 
 ```sh
 $ cat example/record_result/main.go
@@ -192,7 +192,7 @@ func main() {
 
 ## 示例
 
-更多示例，请参考 [example-readmes](example-readmes/)。
+更多示例，请参考 [example](https://github.com/realjustice/swiss-pairing-engine/tree/master/example)。
 
 ## 相关仓库
 
