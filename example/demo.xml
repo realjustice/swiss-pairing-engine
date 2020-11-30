@@ -59,25 +59,4 @@
     <DPParameterSet displayClCol="true" displayCoCol="true" displayIndGamesInMatches="true" displayNumCol="true" displayPlCol="true" gameFormat="short" playerSortType="name" showByePlayer="true" showNotFinallyRegisteredPlayers="true" showNotPairedPlayers="true" showNotParticipatingPlayers="false" showPlayerClub="true" showPlayerCountry="false" showPlayerGrade="true"/>
     <PublishParameterSet exportHFToOGSite="false" exportTFToOGSite="true" exportToLocalFile="true" exportToUDSite="false" htmlAutoScroll="false" print="true"/>
   </TournamentParameterSet>
-  <Games>
-    <Game blackPlayer="BILLOIRECLEMENT" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="1" whitePlayer="ARNAUDANCELIN"/>
-    <Game blackPlayer="BILLOUETSIMON" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="2" whitePlayer="AVENELAUGUSTIN"/>
-    <Game blackPlayer="NESMEVINCENT" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="3" whitePlayer="BLANCHARDBENJAMIN"/>
-    <Game blackPlayer="PAPAZOGLOUBENJAMIN" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="4" whitePlayer="BUFFARDEMMANUEL"/>
-    <Game blackPlayer="IMAMURA-CORNUEJOLSTORU" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="5" whitePlayer="CANCEPHILIPPE"/>
-    <Game blackPlayer="MOSCATELLIALDO" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="6" whitePlayer="COQUELETLAURENT"/>
-    <Game blackPlayer="DOUSSOTPATRICE" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="7" whitePlayer="CORNUEJOLSDOMINIQUE"/>
-    <Game blackPlayer="KUNNESTÉPHAN" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="8" whitePlayer="CRUBELLIERETIENNE"/>
-    <Game blackPlayer="TECCHIOPIERRE" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="9" whitePlayer="FEVRIERLOUIS"/>
-    <Game blackPlayer="HWANGIN-SEONG" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="10" whitePlayer="GAUTHIERHENRI"/>
-    <Game blackPlayer="WURZINGERRALF" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="11" whitePlayer="GRANGERALBAN"/>
-    <Game blackPlayer="LE_CALVÉTANGUY" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="12" whitePlayer="GUENNOUMORAN"/>
-    <Game blackPlayer="MASSONFABIEN" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="13" whitePlayer="GUEVELBRENDAN"/>
-    <Game blackPlayer="NADDEFJEAN_LOUP" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="14" whitePlayer="HENRYYANNIS"/>
-    <Game blackPlayer="LE_BROUSTERREMI" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="15" whitePlayer="KARADABANDENIS"/>
-    <Game blackPlayer="PUYAUBREAUNICOLAS" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="16" whitePlayer="LEESEMI"/>
-    <Game blackPlayer="PARCOITDAVID" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="17" whitePlayer="LIHAOHAN"/>
-    <Game blackPlayer="WUBEILUN" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="18" whitePlayer="MIZESSYNFRANÇOIS"/>
-    <Game blackPlayer="TURLOTQUENTIN" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="19" whitePlayer="ROBERTLUDWIG"/>
-  </Games>
 </Tournament>

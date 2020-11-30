@@ -1,7 +1,7 @@
 package gotha
 
 import (
-	"tournament_pair/src/parameter_set"
+	"github.com/realjustice/swiss-pairing-engine/src/parameter_set"
 )
 
 type Player struct {

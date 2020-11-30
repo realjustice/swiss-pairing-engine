@@ -2,9 +2,9 @@ package gotha
 
 import (
 	weighted_match_long "github.com/realjustice/maximum_weight_matching/src"
+	"github.com/realjustice/swiss-pairing-engine/src/parameter_set"
 	"math"
 	"sort"
-	"tournament_pair/src/parameter_set"
 )
 
 type Tournament struct {

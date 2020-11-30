@@ -2,9 +2,9 @@ package gotha
 
 import (
 	"bytes"
+	. "github.com/realjustice/swiss-pairing-engine/src/parameter_set"
 	"io"
 	"os"
-	. "tournament_pair/src/parameter_set"
 )
 
 const (
