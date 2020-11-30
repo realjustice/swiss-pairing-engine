@@ -1,12 +1,15 @@
 package gotha
 
 import (
+	weighted_match_long "github.com/realjustice/maximum_weight_matching/src"
+	"math"
 	"sort"
 	"tournament_pair/src/parameter_set"
 )
 
 type Tournament struct {
 	tournamentParameterSet *parameter_set.TournamentParameterSet
+	selectedPlayers        []*Player
 	/**
 	 * HashMap of Players The key is the getKeyString
 	 */
@@ -15,7 +18,7 @@ type Tournament struct {
 	 * HashMap of Games The key is (roundNumber * Gotha.MAX_NUMBER_OF_TABLES +
 	 * tableNumber)
 	 */
-	hmGames map[string]*Game
+	hmGames map[int]*Game
 
 	hmScoredPlayers map[string]*ScoredPlayer
 
@@ -28,7 +31,7 @@ func NewTournament() *Tournament {
 	// 添加报名人员
 	t.hmPlayers = make(map[string]*Player)
 
-	t.hmGames = make(map[string]*Game)
+	t.hmGames = make(map[int]*Game)
 	t.byePlayers = make([]*Player, MAX_NUMBER_OF_ROUNDS)
 
 	return t
@@ -41,19 +44,34 @@ func (t *Tournament) SetTournamentSet(set *parameter_set.TournamentParameterSet)
 	t.tournamentParameterSet = set
 }
 
-func (t *Tournament) AddPlayer(players []*Player) {
-	for _, p := range players {
-		t.hmPlayers[p.SetKeyString()] = p
+func (t *Tournament) AddPlayer(p *Player) {
+	t.hmPlayers[p.GetKeyString()] = p
+}
+
+func (t *Tournament) AddGame(g *Game) bool {
+	if g == nil {
+		return false
 	}
+	wp := g.GetWhitePlayer()
+	bp := g.GetBlackPlayer()
+	if wp == nil || bp == nil {
+		return false
+	}
+	r := g.GetRoundNumber()
+	tt := g.GetTableNumber()
+
+	key := r*MAX_NUMBER_OF_TABLES + tt
+	t.hmGames[key] = g
+	return true
 }
 
 func (t *Tournament) FillPairingInfo(roundNumber int) {
 	gps := t.tournamentParameterSet.GetGeneralParameterSet()
 	pps := t.tournamentParameterSet.GetPlacementParameterSet()
 	paiPs := t.tournamentParameterSet.GetPairingParameterSet()
-
+	mainCrit := pps.MainCriterion()
 	mainScoreMin := 0
-	mainScoreMax := 0
+	mainScoreMax := roundNumber
 	groupNumber := 0 // 有几轮就有几个groupNumber
 
 	for cat := 0; cat < gps.GetNumberOfCategories(); cat++ {
@@ -65,7 +83,7 @@ func (t *Tournament) FillPairingInfo(roundNumber int) {
 				}
 				// 获取到本轮为止的全胜人员
 				// 第一轮全体选手
-				if sp.GetCritValue(100, roundNumber-1)/2 != mainScore {
+				if sp.GetCritValue(mainCrit, roundNumber-1)/2 != mainScore {
 					continue
 				}
 
@@ -82,7 +100,7 @@ func (t *Tournament) FillPairingInfo(roundNumber int) {
 			}
 
 			paiCrit := make([]int, len(crit)+1)
-			copy(crit, paiCrit)
+			copy(paiCrit, crit)
 			paiCrit[len(paiCrit)-1] = additionalCrit
 			// 根据规则排序
 			spc := NewScoredPlayerComparator(alSPGroup, paiCrit, roundNumber-1)
@@ -99,6 +117,36 @@ func (t *Tournament) FillPairingInfo(roundNumber int) {
 
 	numberOfGroups := groupNumber
 
+	//ps := make(map[string]*ScoredPlayer)
+	//readFile, err := os.Open("gob")
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	//dec := gob.NewDecoder(readFile)
+	//err2 := dec.Decode(&ps)
+	//
+	//if err2 != nil {
+	//	fmt.Println(err2)
+	//	return
+	//}
+	//
+	//
+	//writeFile, err := os.Create("gob")
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	//
+	//enc := gob.NewEncoder(writeFile)
+	//err2 = enc.Encode(t.hmScoredPlayers)
+	//fmt.Println(err2)
+	//a := make([]string, len(t.hmScoredPlayers))
+	//for k, v := range t.hmScoredPlayers {
+	//	a[t.hmScoredPlayers[k].InnerPlacement] = v.FirstName + v.FirstName
+	//}
+	//for index, v := range a {
+	//	fmt.Printf("%s序号:%d\n", v, index)
+	//}
+
 	for _, sp := range t.hmScoredPlayers {
 		sp.NumberOfGroups = numberOfGroups
 	}
@@ -112,10 +160,64 @@ func (t *Tournament) FillPairingInfo(roundNumber int) {
 	if roundNumber > 1 {
 		// prepare an Array of scores before round r
 		// 计算上下调
+		alTempScoredPlayers := make([]*ScoredPlayer, 0)
+		for _, p := range t.hmScoredPlayers {
+			alTempScoredPlayers = append(alTempScoredPlayers, p)
+		}
+
+		nbP := len(alTempScoredPlayers)
+		scoreBefore := make([][]int, 0)
+		for r := 0; r < roundNumber; r++ {
+			scoreBefore = append(scoreBefore, make([]int, nbP))
+		}
+
+		for r := 0; r < roundNumber; r++ {
+			for iSP := 0; iSP < nbP; iSP++ {
+				sp := alTempScoredPlayers[iSP]
+				scoreBefore[r][iSP] = sp.GetCritValue(mainCrit, r-1) / 2
+			}
+		}
+
+		for r := 0; r < roundNumber; r++ {
+			for iSP := 0; iSP < nbP; iSP++ {
+				sp := alTempScoredPlayers[iSP]
+				g := sp.GetGame(r)
+				if g == nil {
+					continue
+				}
+				wP := g.GetWhitePlayer()
+				bP := g.GetBlackPlayer()
+				var opp *Player
+				if sp.HasSameKeyString(wP) {
+					opp = bP
+				} else {
+					opp = wP
+				}
+				sOpp := t.hmScoredPlayers[opp.GetKeyString()]
+
+				f := func() int {
+					for i, v := range alTempScoredPlayers {
+						if v == sOpp {
+							return i
+						}
+					}
+					return math.MinInt64
+				}
+
+				iSOpp := f()
+				if scoreBefore[r][iSP] < scoreBefore[r][iSOpp] {
+					sp.NbDU++
+				}
+				if scoreBefore[r][iSP] > scoreBefore[r][iSOpp] {
+					sp.NbDD++
+				}
+			}
+		}
 	}
 }
 
-func (t *Tournament) MakeAutomaticPairing(alPlayersToPair []*Player, roundNumber int) ([]*Game, bool) {
+func (t *Tournament) MakeAutomaticPairing(roundNumber int) ([]*Game, bool) {
+	alPlayersToPair := t.selectedPlayers
 	// not even
 	if len(alPlayersToPair)%2 != 0 {
 		return nil, false
@@ -123,16 +225,17 @@ func (t *Tournament) MakeAutomaticPairing(alPlayersToPair []*Player, roundNumber
 
 	t.fillBaseScoringInfoIfNecessary()
 
-	// todo getGamesListBefore()
-	alPreviousGames := t.gamesListBefore(roundNumber)
-
 	// fill pairing info
 	t.FillPairingInfo(roundNumber)
+	// todo getGamesListBefore()
+	alPreviousGames := t.gamesListBefore(roundNumber)
 
 	// todo 大于300人的比赛暂未处理
 
 	alRemainingPlayers := make([]*Player, len(alPlayersToPair))
 	copy(alRemainingPlayers, alPlayersToPair)
+
+	t.FillPairingInfo(roundNumber)
 
 	alg := t.pairAGroup(alRemainingPlayers, roundNumber, t.hmScoredPlayers, alPreviousGames)
 	alGames := make([]*Game, len(alg))
@@ -140,6 +243,51 @@ func (t *Tournament) MakeAutomaticPairing(alPlayersToPair []*Player, roundNumber
 	copy(alGames, alg)
 
 	return alGames, true
+}
+
+func (t *Tournament) Pair(roundNumber int) {
+	roundNumber--
+	if len(t.selectedPlayers)%2 != 0 {
+		// set bye player
+		t.ChooseAByePlayer(t.selectedPlayers, roundNumber)
+		// remove bye player from alPlayersToPair
+		byeP := t.GetByePlayer(roundNumber)
+		var pToRemove *Player
+		for _, p := range t.selectedPlayers {
+			if p.HasSameKeyString(byeP) {
+				pToRemove = p
+			}
+		}
+		t.removePlayer(pToRemove)
+	}
+
+	alNewGames, isSucceed := t.MakeAutomaticPairing(roundNumber)
+	tN := 0
+
+	if isSucceed {
+		for _, g := range alNewGames {
+			oldGames := t.gamesList(roundNumber)
+			stop := true
+			f := func() {
+				stop = true
+				for _, oldG := range oldGames {
+					if oldG.GetTableNumber() == tN {
+						tN++
+						stop = false
+					}
+				}
+			}
+			f()
+			for !stop {
+				f()
+			}
+			tN++
+			g.SetTableNumber(tN)
+		}
+	}
+	for _, g := range alNewGames {
+		t.AddGame(g)
+	}
 }
 
 func (t *Tournament) fillBaseScoringInfoIfNecessary() {
@@ -420,6 +568,16 @@ func (t *Tournament) gamesListBefore(roundNumber int) []*Game {
 	return gL
 }
 
+func (t *Tournament) gamesList(roundNumber int) []*Game {
+	gL := make([]*Game, 0)
+	for _, g := range t.hmGames {
+		if g.GetRoundNumber() == roundNumber {
+			gL = append(gL, g)
+		}
+	}
+	return gL
+}
+
 func (t *Tournament) pairAGroup(alGroupedPlayers []*Player, roundNumber int, hmScoredPlayers map[string]*ScoredPlayer, alPreviousGames []*Game) []*Game {
 	// 分组数量
 	numberOfPlayersInGroup := len(alGroupedPlayers)
@@ -445,18 +603,19 @@ func (t *Tournament) pairAGroup(alGroupedPlayers []*Player, roundNumber int, hmS
 	}
 
 	//mate := make([]int, 0)
-
+	w := weighted_match_long.NewWeightedMatchLong()
+	mate := w.WeightedMatchLong(costs, weighted_match_long.MAXIMIZE)
 	alG := make([]*Game, 0)
-	for i := 1; i <= len(costs); i++ {
-		//if i < mate[i] {
-		//	p1 := alGroupedPlayers[i-1]
-		//	p2 := alGroupedPlayers[mate[i]-1]
-		//	sP1 := t.hmScoredPlayers[p1.GetKeyString()]
-		//	sP2 := t.hmScoredPlayers[p2.GetKeyString()]
-		//	g :=
-		//	alg := append(alG, g)
-		//}
 
+	for i := 1; i <= len(costs); i++ {
+		if i < mate[i] {
+			p1 := alGroupedPlayers[i-1]
+			p2 := alGroupedPlayers[mate[i]-1]
+			sP1 := t.hmScoredPlayers[p1.GetKeyString()]
+			sP2 := t.hmScoredPlayers[p2.GetKeyString()]
+			g := t.gameBetween(sP1, sP2, roundNumber)
+			alG = append(alG, g)
+		}
 	}
 
 	return alG
@@ -530,8 +689,88 @@ func (t *Tournament) costValue(sP1 *ScoredPlayer, sP2 *ScoredPlayer, roundNumber
 		scoCost = int64(float64(paiPS.GetPaiMaMinimizeScoreDifference()) * (1.0 - x) * (1.0 + k*x))
 	}
 	cost += scoCost
-	// todo Main Criterion 3 : If different groups, make a directed Draw-up/Draw-down
 
+	// todo Main Criterion 3 : If different groups, make a directed Draw-up/Draw-down
+	// 假设现在有三个group （group1 ，group2 ，group3 其中group1总分<group2<group3），我在group2这个分组中
+	// 那么我最容易遇到的是group1中"上调次数最多,且上调次数大于下调次数的选手"
+	// 以及group3中"下调次数最多,且下调次数大于上调次数的选手"
+	var duddCost int64
+	if abs(sP1.GroupNumber-sP2.GroupNumber) < 4 && sP1.GroupNumber != sP2.GroupNumber {
+		// 4 scenarii
+		// scenario = 0 : One of the players has already been drawn in the same sense
+		// scenario = 1 : normal conditions (does not correct anything and no previous drawn in the same sense)
+		// scenario = 2 : it corrects a previous DU/DD
+		// scenario = 3 : it corrects a previous DU/DD for both
+		scenario := 1
+		if sP1.NbDU > 0 && sP1.GroupNumber > sP2.GroupNumber {
+			scenario = 0
+		}
+		if sP1.NbDD > 0 && sP1.GroupNumber < sP2.GroupNumber {
+			scenario = 0
+		}
+		if sP2.NbDU > 0 && sP2.GroupNumber > sP1.GroupNumber {
+			scenario = 0
+		}
+		if sP2.NbDD > 0 && sP2.GroupNumber < sP1.GroupNumber {
+			scenario = 0
+		}
+
+		if scenario != 0 && sP1.NbDU > 0 && sP1.GroupNumber < sP2.GroupNumber {
+			scenario++
+		}
+		if scenario != 0 && sP1.NbDD > 0 && sP1.GroupNumber > sP2.GroupNumber {
+			scenario++
+		}
+		if scenario != 0 && sP2.NbDU > 0 && sP2.NbDD < sP2.NbDU && sP2.GroupNumber < sP1.GroupNumber {
+			scenario++
+		}
+		if scenario != 0 && sP2.NbDD > 0 && sP2.NbDU < sP2.NbDD && sP2.GroupNumber > sP1.GroupNumber {
+			scenario++
+		}
+
+		// Modifs V3.33.04
+
+		duddWeight := paiPS.GetPaiMaDUDDWeight() / 4
+		upperSP := func() *ScoredPlayer {
+			if sP1.GroupNumber < sP2.GroupNumber {
+				return sP1
+			} else {
+				return sP2
+			}
+		}()
+
+		lowerSP := func() *ScoredPlayer {
+			if sP1.GroupNumber < sP2.GroupNumber {
+				return sP2
+			} else {
+				return sP1
+			}
+		}()
+
+		if paiPS.GetPaiMaDUDDUpperMode() == parameter_set.PAIMA_DUDD_TOP {
+			duddCost += duddWeight / 2 * int64(upperSP.GroupSize-1-upperSP.InnerPlacement) / int64(upperSP.GroupSize)
+		} else if paiPS.GetPaiMaDUDDUpperMode() == parameter_set.PAIMA_DUDD_MID {
+			duddCost += duddWeight / 2 * int64(upperSP.GroupSize-1-abs(2*upperSP.InnerPlacement-upperSP.GroupSize+1)) / int64(upperSP.GroupSize)
+		} else if paiPS.GetPaiMaDUDDUpperMode() == parameter_set.PAIMA_DUDD_BOT {
+			duddCost += duddWeight / 2 * int64(upperSP.InnerPlacement) / int64(upperSP.GroupSize)
+		}
+		if paiPS.GetPaiMaDUDDLowerMode() == parameter_set.PAIMA_DUDD_TOP {
+			duddCost += duddWeight / 2 * int64(lowerSP.GroupSize-1-lowerSP.InnerPlacement) / int64(lowerSP.GroupSize)
+		} else if paiPS.GetPaiMaDUDDLowerMode() == parameter_set.PAIMA_DUDD_MID {
+			duddCost += duddWeight / 2 * int64(lowerSP.GroupSize-1-abs(2*lowerSP.InnerPlacement-lowerSP.GroupSize+1)) / int64(lowerSP.GroupSize)
+		} else if paiPS.GetPaiMaDUDDLowerMode() == parameter_set.PAIMA_DUDD_BOT {
+			duddCost += duddWeight / 2 * int64(lowerSP.InnerPlacement) / int64(lowerSP.GroupSize)
+		}
+
+		if scenario == 1 || (scenario >= 1 && !paiPS.IsPaiMaCompensateDUDD()) {
+			duddCost += duddWeight
+		} else if scenario == 2 {
+			duddCost += 2 * duddWeight
+		} else if scenario == 3 {
+			duddCost += 3 * duddWeight
+		}
+	}
+	cost += duddCost
 	// Main Criterion 4 : Seeding
 	var seedCost int64 = 0
 	if sP1.GroupNumber == sP2.GroupNumber {
@@ -568,6 +807,17 @@ func (t *Tournament) GetPlayers() []*Player {
 		players = append(players, p)
 	}
 	return players
+}
+
+func (t *Tournament) GetGamesFromRound(rn int) []*Game {
+	games := make([]*Game, 0)
+	for _, g := range t.hmGames {
+		if g.RoundNumber == rn {
+			games = append(games, g)
+		}
+	}
+
+	return games
 }
 
 /**
@@ -620,12 +870,20 @@ func (t *Tournament) gameBetween(sP1 *ScoredPlayer, sP2 *ScoredPlayer, roundNumb
 		if wbBalance(sP1, roundNumber-1) > wbBalance(sP2, roundNumber-1) {
 			g.SetWhitePlayer(p2)
 			g.SetBlackPlayer(p1)
-		} else if wbBalance(sP1, roundNumber-1) > wbBalance(sP2, roundNumber-1) {
+		} else if wbBalance(sP1, roundNumber-1) < wbBalance(sP2, roundNumber-1) {
 			g.SetWhitePlayer(p1)
 			g.SetBlackPlayer(p2)
 		} else {
-			g.SetWhitePlayer(p2)
-			g.SetBlackPlayer(p1)
+			//if getRand(){
+			//	g.SetWhitePlayer(p2)
+			//	g.SetBlackPlayer(p1)
+			//}else {
+			//	g.SetWhitePlayer(p1)
+			//	g.SetBlackPlayer(p2)
+			//}
+
+			g.SetWhitePlayer(p1)
+			g.SetBlackPlayer(p2)
 		}
 	}
 
@@ -638,4 +896,100 @@ func (t *Tournament) gameBetween(sP1 *ScoredPlayer, sP2 *ScoredPlayer, roundNumb
 
 func (t *Tournament) GetPlayerByKeyString(strNaFi string) *Player {
 	return t.hmPlayers[strNaFi]
+}
+
+func (t *Tournament) SetSelectedPlayers(strNaFis []string) {
+	for _, keyString := range strNaFis {
+		t.selectedPlayers = append(t.selectedPlayers, t.GetPlayerByKeyString(keyString))
+	}
+}
+
+func (t *Tournament) getGameByRoundAndTable(rn int, tableNumber int) *Game {
+	key := rn*MAX_NUMBER_OF_TABLES + tableNumber
+	return t.hmGames[key]
+}
+
+func (t *Tournament) SortGameByTableNumber() []*Game {
+	games := make([]*Game, 0)
+	for _, g := range t.hmGames {
+		games = append(games, g)
+	}
+
+	// 冒泡排序
+	n := len(games)
+	hasChanged := false
+	for i := 0; i < n; i++ {
+		for j := 0; j < n-i-1; j++ {
+			if games[j].TableNumber > games[j+1].TableNumber {
+				games[j], games[j+1] = games[j+1], games[j]
+				hasChanged = true
+			}
+		}
+		if !hasChanged {
+			break
+		}
+	}
+
+	hasChanged = false
+	for i := 0; i < n; i++ {
+		for j := 0; j < n-i-1; j++ {
+			if games[j].RoundNumber > games[j+1].RoundNumber {
+				games[j], games[j+1] = games[j+1], games[j]
+				hasChanged = true
+			}
+		}
+		if !hasChanged {
+			break
+		}
+	}
+
+	return games
+}
+
+func (t *Tournament) SetGameResult(rn int, tableNumber int, result string) {
+	rn--
+	game := t.getGameByRoundAndTable(rn, tableNumber)
+
+	game.SetResult(SelectResult(result))
+}
+
+func (t *Tournament) GetByePlayer(roundNumber int) *Player {
+	if t.byePlayers == nil {
+		t.byePlayers = make([]*Player, MAX_NUMBER_OF_ROUNDS)
+	}
+	return t.byePlayers[roundNumber]
+}
+
+func (t *Tournament) ChooseAByePlayer(alPlayers []*Player, roundNumber int) {
+	// The weight allocated to each player is 1000 * number of previous byes + rank
+	// The chosen player will be the player with the minimum weight
+	var bestPlayerForBye *Player
+	minWeight := 1000*(MAX_NUMBER_OF_ROUNDS-1) + 38 + 1 // Nobody can have such a weight neither more
+
+	for _, p := range alPlayers {
+		weightForBye := p.GetRank()
+		for r := 0; r < roundNumber; r++ {
+			if t.byePlayers[r] == nil {
+				continue
+			}
+			if p.HasSameKeyString(t.byePlayers[r]) {
+				weightForBye += 1000
+			}
+		}
+		if weightForBye < minWeight {
+			minWeight = weightForBye
+			bestPlayerForBye = p
+		}
+	}
+
+	t.byePlayers[roundNumber] = bestPlayerForBye
+}
+
+func (t *Tournament) removePlayer(rmP *Player) {
+	for i, p := range t.selectedPlayers {
+		if p == rmP {
+			t.selectedPlayers = append(t.selectedPlayers[:i], t.selectedPlayers[i+1:]...)
+			break
+		}
+	}
 }

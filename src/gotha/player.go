@@ -1,17 +1,15 @@
 package gotha
 
 import (
-	"encoding/xml"
-	"strings"
 	"tournament_pair/src/parameter_set"
 )
 
 type Player struct {
-	Player           xml.Name `xml:"Player"`
-	Name             string   `xml:"name,attr"`
-	Rating           int      `xml:"rating,attr"`
+	Name             string
+	FirstName        string
+	Rating           int
 	Rank             int
-	ParticipatingStr string `xml:"participatingStr,attr"`
+	ParticipatingStr string
 	keyString        string
 	// 记录每一轮是否参与编排
 	participating []bool
@@ -25,8 +23,8 @@ func (p *Player) Category(gps *parameter_set.GeneralParameterSet) int {
 	return 0
 }
 
-func (p *Player) SetKeyString() string {
-	p.keyString = strings.ToUpper(p.Name)
+func (p *Player) SetKeyString(keyStr string) string {
+	p.keyString = keyStr
 	return p.keyString
 }
 

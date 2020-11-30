@@ -3,10 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/realjustice/swiss-pairing-engine/src/gotha"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
-	"tournament_pair/src/gotha"
 )
 
 var (
@@ -17,22 +18,23 @@ var (
 func main() {
 	flag.Parse()
 
-	// step1 init
+	// Step1 init the pair engine
 	g := gotha.NewGotha()
-	// Demo 1
+
+	// Step2 import the data resource
+	// you can import from the xml file
 	filePath := `../demo.xml` //  your file path
-	if err := g.GetFromXMLFile(filePath); err != nil {
-		log.Fatal(err)
-	}
+	importFromXMLFile(filePath, g)
 
-	// Demo2
+	// or from bytes
+	// importFromBytes(filePath, g)
 
-	// step1 chose the pair system
+	// Step3 chose the pair system
 	// Currently only supports Swiss-made arrangements
 	g.SelectSystem(*system)
 	t := g.GetTournament()
 
-	// step2 choose the player （via keyString）
+	// Step4 choose the players （via keyString）
 	t.SetSelectedPlayers([]string{"ARNAUDANCELIN",
 		"AVENELAUGUSTIN",
 		"BILLOIRECLEMENT",
@@ -74,19 +76,19 @@ func main() {
 		"WUBEILUN",
 		"WURZINGERRALF"})
 
-	// step3 pair
+	// Step5 pair
 	t.Pair(*round)
 	for _, game := range t.SortGameByTableNumber() {
 		fmt.Printf("white : %s  <> black : %s\n", game.GetWhitePlayer().Name+" "+game.GetWhitePlayer().FirstName, game.GetBlackPlayer().Name+" "+game.GetBlackPlayer().FirstName)
 	}
 
-	//  step4 you will get a io.reader
+	//  Step6 you will get a io.reader
 	rd, err := g.IO.FlushGameToXML(t.SortGameByTableNumber())
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// step5 overwrite your xml file (Optional operation)
+	// overwrite your xml file (Optional operation)
 	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		log.Fatal(err)
@@ -94,6 +96,28 @@ func main() {
 	defer func() { _ = file.Close() }()
 	_, err = io.Copy(file, rd)
 	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func importFromXMLFile(filePath string, g *gotha.Gotha) {
+	if err := g.ImportFromXMLFile(filePath); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func importFromBytes(filePath string, g *gotha.Gotha) {
+	tempXML, err := os.Open(filePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer func() { _ = tempXML.Close() }()
+	fd, err := ioutil.ReadAll(tempXML)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err = g.ImportFromBytes(fd); err != nil {
 		log.Fatal(err)
 	}
 }

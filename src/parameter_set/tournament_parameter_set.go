@@ -7,6 +7,15 @@ const (
 	TYPE_SWISSCAT  = 3
 )
 
+func ConvertSystem(system string) int {
+	switch system {
+	case "SWISS":
+		return TYPE_SWISS
+	default:
+		return TYPE_SWISS
+	}
+}
+
 type TournamentParameterSet struct {
 	generalParameterSet   *GeneralParameterSet
 	pairingParameterSet   *PairingParameterSet

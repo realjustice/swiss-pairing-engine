@@ -35,3 +35,8 @@ func (set *PlacementParameterSet) InitForSwiss() {
 	set.plaCriteria[4] = PLA_CRIT_NUL
 	set.plaCriteria[5] = PLA_CRIT_NUL
 }
+
+func (set *PlacementParameterSet) MainCriterion() int {
+	mainCrit := PLA_CRIT_NBW
+	return mainCrit
+}

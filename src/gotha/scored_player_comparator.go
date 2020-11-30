@@ -34,6 +34,7 @@ func (spc ScoredPlayerComparator) Swap(i, j int) {
 }
 
 func (spc *ScoredPlayerComparator) BetterScore(sp1 *ScoredPlayer, sp2 *ScoredPlayer) int {
+
 	for cr := 0; cr < len(spc.criterion); cr++ {
 		if sp1.GetCritValue(spc.criterion[cr], spc.roundNumber) < sp2.GetCritValue(spc.criterion[cr], spc.roundNumber) {
 			return 1

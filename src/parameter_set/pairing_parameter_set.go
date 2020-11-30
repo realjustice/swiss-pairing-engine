@@ -9,6 +9,11 @@ const (
 	PAIMA_SEED_SPLITANDRANDOM           = 1
 	PAIMA_SEED_SPLITANDFOLD             = 2
 	PAIMA_SEED_SPLITANDSLIP             = 3
+
+	// 上下调的模式
+	PAIMA_DUDD_TOP = 1
+	PAIMA_DUDD_MID = 2
+	PAIMA_DUDD_BOT
 )
 
 // 匹配参数
@@ -33,6 +38,11 @@ type PairingParameterSet struct {
 	paiMaSeedSystem1             int
 	paiMaSeedSystem2             int
 
+	paiMaDUDDWeight     int64 // 上下调权重
+	paiMaDUDDUpperMode  int   // 上调模式
+	paiMaDUDDLowerMode  int   // 下调模式
+	paiMaCompensateDUDD bool  // 是否开启上下调补偿
+
 	paiBaAvoidDuplGame int64
 	paiBaDeterministic bool
 }
@@ -51,6 +61,10 @@ func NewPairingParameterSet() *PairingParameterSet {
 	set.paiMaSeedSystem1 = PAIMA_SEED_SPLITANDRANDOM
 	set.paiMaSeedSystem2 = PAIMA_SEED_SPLITANDFOLD
 
+	set.paiMaDUDDUpperMode = PAIMA_DUDD_MID
+	set.paiMaDUDDUpperMode = PAIMA_DUDD_MID
+	set.paiMaCompensateDUDD = true
+
 	return set
 }
 
@@ -60,11 +74,18 @@ func (p *PairingParameterSet) InitForSwiss() {
 	p.paiBaDeterministic = true
 	p.paiBaBalanceWB = PAIBA_MAX_BALANCEWB
 	p.paiMaMinimizeScoreDifference = PAIMA_MAX_MINIMIZE_SCORE_DIFFERENCE
+	p.paiMaAdditionalPlacementCritSystem1 = PLA_CRIT_RATING
+	p.paiMaAdditionalPlacementCritSystem2 = PLA_CRIT_RATING
+
+	p.paiMaLastRoundForSeedSystem1 = 1
 
 	p.paiMaSeedSystem1 = PAIMA_SEED_SPLITANDSLIP
 	p.paiMaSeedSystem2 = PAIMA_SEED_SPLITANDSLIP
 	//p.paiSeDefSecCrit = PAIMA_MAX_AVOID_MIXING_CATEGORIES
-	//p.paiMaDUDDWeight = PAIMA_MAX_DUDD_WEIGHT
+	p.paiMaDUDDWeight = PAIMA_MAX_DUDD_WEIGHT
+	p.paiMaCompensateDUDD = true
+	p.paiMaDUDDUpperMode = PAIMA_DUDD_MID
+	p.paiMaDUDDLowerMode = PAIMA_DUDD_MID
 	//p.paiSeMinimizeHandicap = 0
 	//p.paiSeAvoidSameGeo = 0
 
@@ -112,4 +133,20 @@ func (p *PairingParameterSet) GetPaiMaSeedSystem1() int {
 
 func (p *PairingParameterSet) GetPaiMaSeedSystem2() int {
 	return p.paiMaSeedSystem2
+}
+
+func (p *PairingParameterSet) GetPaiMaDUDDWeight() int64 {
+	return p.paiMaDUDDWeight
+}
+
+func (p *PairingParameterSet) GetPaiMaDUDDLowerMode() int {
+	return p.paiMaDUDDLowerMode
+}
+
+func (p *PairingParameterSet) GetPaiMaDUDDUpperMode() int {
+	return p.paiMaDUDDUpperMode
+}
+
+func (p *PairingParameterSet) IsPaiMaCompensateDUDD() bool {
+	return p.paiMaCompensateDUDD
 }

@@ -5,69 +5,51 @@ import (
 	"errors"
 	"github.com/beevik/etree"
 	"io"
-	"os"
 	"strconv"
 )
 
-type Input struct {
+type InputOutput struct {
+	Doc      *etree.Document
 	Root     *etree.Element
 	bPlayers bool
 	bGames   bool
 }
 
-type OptionFunc func(input *Input)
+type OptionFunc func(input *InputOutput)
 
 type IOption interface {
-	apply(*Input)
+	apply(*InputOutput)
 }
 
-func (f OptionFunc) apply(input *Input) {
-	f(input)
+func (f OptionFunc) apply(io *InputOutput) {
+	f(io)
 }
 
 func WithGames() IOption {
-	return OptionFunc(func(input *Input) {
-		input.bGames = true
+	return OptionFunc(func(io *InputOutput) {
+		io.bGames = true
 	})
 }
 
 func WithPlayers() IOption {
-	return OptionFunc(func(input *Input) {
-		input.bPlayers = true
+	return OptionFunc(func(io *InputOutput) {
+		io.bPlayers = true
 	})
 }
 
-func NewInput() *Input {
-	return new(Input)
+func NewInputOutput() *InputOutput {
+	return new(InputOutput)
 }
 
-func (i *Input) WithOption(options ...IOption) {
+func (i *InputOutput) WithOption(options ...IOption) {
 	for _, option := range options {
 		option.apply(i)
 	}
 }
 
-/***
-  导入xml文件
-*/
-func (i *Input) ImportTournamentFromXMLFile(filePath string, tournament *Tournament) error {
-	file, err := os.Open(filePath)
-	defer func() { _ = file.Close() }()
-	if err != nil {
-		return err
-	}
-	return i.ImportFromReader(file, tournament)
-}
-
-/***
-  导入bytes[]
-*/
-func (i *Input) ImportTournamentFromBytes(bs []byte, tournament *Tournament) error {
-	return i.ImportFromReader(bytes.NewReader(bs), tournament)
-}
-
-func (i *Input) ImportFromReader(ri io.Reader, t *Tournament) error {
+func (i *InputOutput) ImportFromReader(ri io.Reader, t *Tournament) error {
 	doc := etree.NewDocument()
+	i.Doc = doc
 	_, err := doc.ReadFrom(ri)
 	if err != nil {
 		return err
@@ -77,6 +59,8 @@ func (i *Input) ImportFromReader(ri io.Reader, t *Tournament) error {
 		return errors.New("xml 导入选手失败！")
 	}
 	i.Root = root
+	// 导入比赛初始配置
+	i.importGeneralParameterSetFromXML(t)
 	// 导入所有比赛选手
 	if i.bPlayers {
 		players, err := i.importPlayersFromXML()
@@ -105,7 +89,7 @@ func (i *Input) ImportFromReader(ri io.Reader, t *Tournament) error {
 	return nil
 }
 
-func (i *Input) importPlayersFromXML() (players []*Player, err error) {
+func (i *InputOutput) importPlayersFromXML() (players []*Player, err error) {
 	participating := make([]bool, MAX_NUMBER_OF_ROUNDS)
 	players = make([]*Player, 0)
 	playersXML := i.Root.SelectElement("Players")
@@ -118,6 +102,8 @@ func (i *Input) importPlayersFromXML() (players []*Player, err error) {
 		p.Name = playerXML.SelectAttrValue("name", "")
 		p.FirstName = playerXML.SelectAttrValue("firstName", "")
 		ratingStr := playerXML.SelectAttrValue("rating", "")
+		// 如果XML中不导入，则随机生成一个16位的随机key
+		p.SetKeyString(playerXML.SelectAttrValue("keyString", ""))
 		rating, err := strconv.Atoi(ratingStr)
 		if err != nil {
 			return players, err
@@ -140,7 +126,7 @@ func (i *Input) importPlayersFromXML() (players []*Player, err error) {
 	return players, err
 }
 
-func (i *Input) importGamesFromXML(tournament *Tournament) (games []*Game, err error) {
+func (i *InputOutput) importGamesFromXML(tournament *Tournament) (games []*Game, err error) {
 	games = make([]*Game, 0)
 	gamesXML := i.Root.SelectElement("Games")
 	if gamesXML == nil {
@@ -163,8 +149,62 @@ func (i *Input) importGamesFromXML(tournament *Tournament) (games []*Game, err e
 		g.SetWhitePlayer(tournament.GetPlayerByKeyString(gameXML.SelectAttrValue("whitePlayer", "")))
 		g.SetKnownColor(true)
 		g.SetResult(SelectResult(gameXML.SelectAttrValue("result", "")))
-		g.SetTableNumber(tableNumber - 1)
+		g.SetTableNumber(tableNumber)
 		games = append(games, g)
 	}
 	return games, err
+}
+
+func (i *InputOutput) importGeneralParameterSetFromXML(tournament *Tournament) {
+	gps := tournament.tournamentParameterSet.GetGeneralParameterSet()
+	tprXML := i.Root.SelectElement("TournamentParameterSet")
+	if tprXML == nil {
+		return
+	}
+	gpsXML := tprXML.SelectElement("GeneralParameterSet")
+	if gpsXML == nil {
+		return
+	}
+	rnStr := gpsXML.SelectAttrValue("numberOfRounds", "5")
+	rn, _ := strconv.Atoi(rnStr)
+	gps.SetNumberOfRounds(rn)
+}
+
+func (i *InputOutput) FlushGameToXML(games []*Game) (io.Reader, error) {
+	gamesXML := i.Root.SelectElement("Games")
+	if gamesXML == nil {
+		gamesXML = i.Root.CreateElement("Games")
+	} else {
+		// delete before create
+		for _, g := range gamesXML.SelectElements("Game") {
+			gamesXML.RemoveChild(g)
+		}
+	}
+	for _, g := range games {
+		gameXML := gamesXML.CreateElement("Game")
+		gameXML.CreateAttr("blackPlayer", g.blackPlayer.keyString)
+		gameXML.CreateAttr("handicap", strconv.Itoa(g.GetHandicap()))
+		gameXML.CreateAttr("blackPlayer", g.blackPlayer.keyString)
+		gameXML.CreateAttr("result", ConvertResult(g.GetResult()))
+		gameXML.CreateAttr("roundNumber", strconv.Itoa(g.GetRoundNumber()+1))
+		gameXML.CreateAttr("tableNumber", strconv.Itoa(g.GetTableNumber()))
+		gameXML.CreateAttr("whitePlayer", g.whitePlayer.keyString)
+	}
+	i.Doc.Indent(2)
+
+	bsw, err := i.Doc.WriteToBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes.NewReader(bsw), nil
+}
+
+func createOrUpdateXMLAttr(element *etree.Element, key string, value string) {
+	attr := element.SelectAttr(key)
+	if attr == nil {
+		element.CreateAttr(key, value)
+	} else {
+		attr.Value = value
+	}
 }

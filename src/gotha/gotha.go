@@ -1,13 +1,21 @@
 package gotha
 
-import . "tournament_pair/src/parameter_set"
+import (
+	"bytes"
+	"io"
+	"os"
+	. "tournament_pair/src/parameter_set"
+)
 
 const (
-	MAX_NUMBER_OF_ROUNDS = 20
+	MAX_NUMBER_OF_ROUNDS  = 20
+	MAX_NUMBER_OF_PLAYERS = 1200
+	MAX_NUMBER_OF_TABLES  = MAX_NUMBER_OF_PLAYERS / 2
 )
 
 type Gotha struct {
 	tournament *Tournament
+	IO         *InputOutput
 }
 
 func NewGotha() *Gotha {
@@ -16,8 +24,9 @@ func NewGotha() *Gotha {
 }
 
 // 选择编排模式
-func (g *Gotha) SelectSystem(system int) {
-	tps := NewTournamentParameterSet()
+func (g *Gotha) SelectSystem(systemStr string) {
+	tps := g.tournament.tournamentParameterSet
+	system := ConvertSystem(systemStr)
 	switch system {
 	case TYPE_UNDEFINED:
 	case TYPE_SWISS:
@@ -26,11 +35,29 @@ func (g *Gotha) SelectSystem(system int) {
 	g.tournament.SetTournamentSet(tps)
 }
 
-func (g *Gotha) GetFromXMLFile(filePath string) {
-	input := NewInput()
-	input.WithOption(WithPlayers())
+func (g *Gotha) ImportFromXMLFile(filePath string) error {
+	file, err := os.Open(filePath)
+	defer func() { _ = file.Close() }()
+	if err != nil {
+		return err
+	}
+	return g.ImportFromReader(file)
+}
+
+func (g *Gotha) FlushGameToXML() (io.Reader, error) {
+	return g.IO.FlushGameToXML(g.tournament.SortGameByTableNumber())
+}
+
+func (g *Gotha) ImportFromBytes(bs []byte) error {
+	return g.ImportFromReader(bytes.NewReader(bs))
+}
+
+func (g *Gotha) ImportFromReader(io io.Reader) error {
+	gothaIO := NewInputOutput()
+	g.IO = gothaIO
+	gothaIO.WithOption(WithPlayers(), WithGames())
 	g.tournament = NewTournament()
-	input.ImportTournamentFromXMLFile(filePath, g.tournament)
+	return g.IO.ImportFromReader(io, g.tournament)
 }
 
 func (g *Gotha) GetTournament() *Tournament {

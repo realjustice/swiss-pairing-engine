@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Tournament>
+  <Players>
+    <Player firstName="Ancelin" name="Arnaud" keyString="ARNAUDANCELIN" participating="11111111111111111111" rank="3D" rating="2253"/>
+    <Player firstName="Philippe" name="Cance" keyString="CANCEPHILIPPE" participating="11111111111111111111" rank="1D" rating="2050"/>
+    <Player firstName="Jean_Loup" name="Naddef" keyString="NADDEFJEAN_LOUP" participating="11111111111111111111" rank="4D" rating="2369"/>
+    <Player firstName="Ralf" name="Wurzinger" keyString="WURZINGERRALF" participating="11111111111111111111" rank="4K" rating="1740"/>
+    <Player firstName="Pierre" name="Tecchio" keyString="TECCHIOPIERRE" participating="11111111111111111111" rank="2D" rating="2161"/>
+    <Player firstName="Yannis" name="Henry" keyString="HENRYYANNIS" participating="11111111111111111111" rank="2K" rating="1908"/>
+    <Player firstName="Semi" name="Lee" keyString="LEESEMI" participating="11111111111111111111" rank="3D" rating="2283"/>
+    <Player firstName="Dominique" name="Cornuejols" keyString="CORNUEJOLSDOMINIQUE" participating="11111111111111111111" rank="2D" rating="2179"/>
+    <Player firstName="Huu_Phuoc" name="Nguyen" keyString="NGUYENHUU_PHUOC" participating="11111111111111111111" rank="30K" rating="-900"/>
+    <Player firstName="Emmanuel" name="Buffard" keyString="BUFFARDEMMANUEL" participating="11111111111111111111" rank="1D" rating="2087"/>
+    <Player firstName="Etienne" name="Crubellier" keyString="CRUBELLIERETIENNE" participating="11111111111111111111" rank="5K" rating="1605"/>
+    <Player firstName="Beilun" name="Wu" keyString="WUBEILUN" participating="11111111111111111111" rank="1K" rating="1961"/>
+    <Player firstName="Toru" name="Imamura-Cornuejols" keyString="IMAMURA-CORNUEJOLSTORU" participating="11111111111111111111" rank="4D" rating="2434"/>
+    <Player firstName="Denis" name="Karadaban" keyString="KARADABANDENIS" participating="11111111111111111111" rank="4D" rating="2389"/>
+    <Player firstName="David" name="Parcoit" keyString="PARCOITDAVID" participating="11111111111111111111" rank="4K" rating="1709"/>
+    <Player firstName="Henri" name="Gauthier" keyString="GAUTHIERHENRI" participating="11111111111111111111" rank="1D" rating="2098"/>
+    <Player firstName="Vincent" name="Nesme" keyString="NESMEVINCENT" participating="11111111111111111111" rank="2K" rating="1925"/>
+    <Player firstName="Patrice" name="Doussot" keyString="DOUSSOTPATRICE" participating="11111111111111111111" rank="4K" rating="1695"/>
+    <Player firstName="Alban" name="Granger" keyString="GRANGERALBAN" participating="11111111111111111111" rank="2D" rating="2215"/>
+    <Player firstName="In-Seong" name="Hwang" keyString="HWANGIN-SEONG" participating="11111111111111111111" rank="8D" rating="2761"/>
+    <Player firstName="Simon" name="Billouet" keyString="BILLOUETSIMON" participating="11111111111111111111" rank="4D" rating="2400"/>
+    <Player firstName="Benjamin" name="Blanchard" keyString="BLANCHARDBENJAMIN" participating="11111111111111111111" rank="4D" rating="2369"/>
+    <Player firstName="Remi" name="le_Brouster" keyString="LE_BROUSTERREMI" participating="11111111111111111111" rank="1K" rating="1961"/>
+    <Player firstName="Stéphan" name="Kunne" keyString="KUNNESTÉPHAN" participating="11111111111111111111" rank="2D" rating="2166"/>
+    <Player firstName="Haohan" name="Li" keyString="LIHAOHAN" participating="11111111111111111111" rank="2D" rating="2184"/>
+    <Player firstName="Benjamin" name="Papazoglou" keyString="PAPAZOGLOUBENJAMIN" participating="11111111111111111111" rank="6D" rating="2554"/>
+    <Player firstName="Moran" name="Guennou" keyString="GUENNOUMORAN" participating="11111111111111111111" rank="1D" rating="2060"/>
+    <Player firstName="Aldo" name="Moscatelli" keyString="MOSCATELLIALDO" participating="11111111111111111111" rank="2K" rating="1850"/>
+    <Player firstName="Clement" name="Billoire" keyString="BILLOIRECLEMENT" participating="11111111111111111111" rank="2K" rating="1857"/>
+    <Player firstName="Nicolas" name="Puyaubreau" keyString="PUYAUBREAUNICOLAS" participating="11111111111111111111" rank="2K" rating="1859"/>
+    <Player firstName="Quentin" name="Turlot" keyString="TURLOTQUENTIN" participating="11111111111111111111" rank="2D" rating="2237"/>
+    <Player firstName="Louis" name="Fevrier" keyString="FEVRIERLOUIS" participating="11111111111111111111" rank="7K" rating="1430"/>
+    <Player firstName="Brendan" name="Guevel" keyString="GUEVELBRENDAN" participating="11111111111111111111" rank="11K" rating="950"/>
+    <Player firstName="Augustin" name="Avenel" keyString="AVENELAUGUSTIN" participating="11111111111111111111" rank="1K" rating="1975"/>
+    <Player firstName="Fabien" name="Masson" keyString="MASSONFABIEN" participating="11111111111111111111" rank="2D" rating="2156"/>
+    <Player firstName="Ludwig" name="Robert" keyString="ROBERTLUDWIG" participating="11111111111111111111" rank="3K" rating="1835"/>
+    <Player firstName="François" name="Mizessyn" keyString="MIZESSYNFRANÇOIS" participating="11111111111111111111" rank="4D" rating="2378"/>
+    <Player firstName="Tanguy" name="le_Calvé" keyString="LE_CALVÉTANGUY" participating="11111111111111111111" rank="6D" rating="2551"/>
+    <Player firstName="Laurent" name="Coquelet" keyString="COQUELETLAURENT" participating="11111111111111111111" rank="3D" rating="2252"/>
+  </Players>
+  <TournamentParameterSet>
+    <!---set the roundNumber-->
+    <GeneralParameterSet numberOfRounds="10"/>
+    <HandicapParameterSet hdBasedOnMMS="false" hdCeiling="0" hdCorrection="0" hdNoHdRankThreshold="30K"/>
+    <PlacementParameterSet>
+      <PlacementCriteria>
+        <PlacementCriterion name="NBW" number="1"/>
+        <PlacementCriterion name="SOSW" number="2"/>
+        <PlacementCriterion name="SOSOSW" number="3"/>
+        <PlacementCriterion name="NULL" number="4"/>
+        <PlacementCriterion name="NULL" number="5"/>
+        <PlacementCriterion name="NULL" number="6"/>
+      </PlacementCriteria>
+    </PlacementParameterSet>
+    <PairingParameterSet paiBaAvoidDuplGame="500000000000000" paiBaBalanceWB="1000000" paiBaDeterministic="true" paiBaRandom="0" paiMaAdditionalPlacementCritSystem1="Rating" paiMaAdditionalPlacementCritSystem2="Rating" paiMaAvoidMixingCategories="0" paiMaCompensateDUDD="true" paiMaDUDDLowerMode="MID" paiMaDUDDUpperMode="MID" paiMaDUDDWeight="100000000" paiMaLastRoundForSeedSystem1="2" paiMaMaximizeSeeding="5000000" paiMaMinimizeScoreDifference="100000000000" paiMaSeedSystem1="SPLITANDSLIP" paiSeAvoidSameGeo="0" paiSeBarThresholdActive="true" paiSeDefSecCrit="20000000000000" paiSeMinimizeHandicap="0" paiSeNbWinsThresholdActive="true" paiSePreferMMSDiffRatherThanSameClub="0" paiSePreferMMSDiffRatherThanSameClubsGroup="0" paiSePreferMMSDiffRatherThanSameCountry="0" paiSeRankThreshold="30K" paiStandardNX1Factor="0.5"/>
+    <DPParameterSet displayClCol="true" displayCoCol="true" displayIndGamesInMatches="true" displayNumCol="true" displayPlCol="true" gameFormat="short" playerSortType="name" showByePlayer="true" showNotFinallyRegisteredPlayers="true" showNotPairedPlayers="true" showNotParticipatingPlayers="false" showPlayerClub="true" showPlayerCountry="false" showPlayerGrade="true"/>
+    <PublishParameterSet exportHFToOGSite="false" exportTFToOGSite="true" exportToLocalFile="true" exportToUDSite="false" htmlAutoScroll="false" print="true"/>
+  </TournamentParameterSet>
+  <Games>
+    <Game blackPlayer="BILLOIRECLEMENT" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="1" whitePlayer="ARNAUDANCELIN"/>
+    <Game blackPlayer="BILLOUETSIMON" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="2" whitePlayer="AVENELAUGUSTIN"/>
+    <Game blackPlayer="NESMEVINCENT" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="3" whitePlayer="BLANCHARDBENJAMIN"/>
+    <Game blackPlayer="PAPAZOGLOUBENJAMIN" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="4" whitePlayer="BUFFARDEMMANUEL"/>
+    <Game blackPlayer="IMAMURA-CORNUEJOLSTORU" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="5" whitePlayer="CANCEPHILIPPE"/>
+    <Game blackPlayer="MOSCATELLIALDO" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="6" whitePlayer="COQUELETLAURENT"/>
+    <Game blackPlayer="DOUSSOTPATRICE" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="7" whitePlayer="CORNUEJOLSDOMINIQUE"/>
+    <Game blackPlayer="KUNNESTÉPHAN" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="8" whitePlayer="CRUBELLIERETIENNE"/>
+    <Game blackPlayer="TECCHIOPIERRE" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="9" whitePlayer="FEVRIERLOUIS"/>
+    <Game blackPlayer="HWANGIN-SEONG" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="10" whitePlayer="GAUTHIERHENRI"/>
+    <Game blackPlayer="WURZINGERRALF" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="11" whitePlayer="GRANGERALBAN"/>
+    <Game blackPlayer="LE_CALVÉTANGUY" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="12" whitePlayer="GUENNOUMORAN"/>
+    <Game blackPlayer="MASSONFABIEN" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="13" whitePlayer="GUEVELBRENDAN"/>
+    <Game blackPlayer="NADDEFJEAN_LOUP" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="14" whitePlayer="HENRYYANNIS"/>
+    <Game blackPlayer="LE_BROUSTERREMI" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="15" whitePlayer="KARADABANDENIS"/>
+    <Game blackPlayer="PUYAUBREAUNICOLAS" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="16" whitePlayer="LEESEMI"/>
+    <Game blackPlayer="PARCOITDAVID" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="17" whitePlayer="LIHAOHAN"/>
+    <Game blackPlayer="WUBEILUN" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="18" whitePlayer="MIZESSYNFRANÇOIS"/>
+    <Game blackPlayer="TURLOTQUENTIN" handicap="0" result="RESULT_UNKNOWN" roundNumber="1" tableNumber="19" whitePlayer="ROBERTLUDWIG"/>
+  </Games>
+</Tournament>
