@@ -58,6 +58,7 @@ func main() {
 	t.SetSelectedPlayers()
 	// Step3 pair
 	t.Pair(*round)
+
 	for _, game := range t.SortGameByTableNumber() {
 		fmt.Printf("white : %s  <> black : %s\n", game.GetWhitePlayer().Name+" "+game.GetWhitePlayer().FirstName, game.GetBlackPlayer().Name+" "+game.GetBlackPlayer().FirstName)
 	}

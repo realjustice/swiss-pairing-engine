@@ -256,7 +256,7 @@ func (t *Tournament) Pair(roundNumber int) {
 		// set bye player
 		t.ChooseAByePlayer(t.selectedPlayers, roundNumber)
 		// remove bye player from alPlayersToPair
-		byeP := t.GetByePlayer(roundNumber)
+		byeP := t.getByePlayer(roundNumber)
 		var pToRemove *Player
 		for _, p := range t.selectedPlayers {
 			if p.HasSameKeyString(byeP) {
@@ -964,11 +964,16 @@ func (t *Tournament) SetGameResult(rn int, tableNumber int, result string) {
 	game.SetResult(SelectResult(result))
 }
 
-func (t *Tournament) GetByePlayer(roundNumber int) *Player {
+func (t *Tournament) getByePlayer(roundNumber int) *Player {
 	if t.byePlayers == nil {
 		t.byePlayers = make([]*Player, MAX_NUMBER_OF_ROUNDS)
 	}
 	return t.byePlayers[roundNumber]
+}
+
+func (t *Tournament) GetByePlayer(roundNumber int) *Player {
+	roundNumber--
+	return t.getByePlayer(roundNumber)
 }
 
 func (t *Tournament) ChooseAByePlayer(alPlayers []*Player, roundNumber int) {
