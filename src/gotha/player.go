@@ -60,6 +60,7 @@ func (p *Player) GetKeyString() string {
 func (p *Player) SetRank(rating int) {
 	rank := rankFromRating(rating)
 	p.Rank = rank
+	p.Rating = rating
 }
 
 func (p *Player) GetRank() int {
