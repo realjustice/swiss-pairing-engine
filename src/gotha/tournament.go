@@ -958,10 +958,14 @@ func (t *Tournament) SortGameByTableNumber() []*Game {
 }
 
 func (t *Tournament) SortGameByTableNumberFromRn(rn int) []*Game {
+	rn--
 	allGames := t.SortGameByTableNumber()
 	games := make([]*Game, 0)
 	for _, v := range allGames {
-		games = append(games, v)
+		if v.GetRoundNumber() == rn {
+			games = append(games, v)
+		}
+
 	}
 	return games
 }

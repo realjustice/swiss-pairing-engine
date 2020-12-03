@@ -65,10 +65,9 @@ func main() {
 	// Step3 pair
 	t.Pair(*round)
 
-	for _, game := range t.SortGameByTableNumber() {
+	for _, game := range t.SortGameByTableNumberFromRn(1) {
 		fmt.Printf("white : %s  <> black : %s\n", game.GetWhitePlayer().Name+" "+game.GetWhitePlayer().FirstName, game.GetBlackPlayer().Name+" "+game.GetBlackPlayer().FirstName)
 	}
-	t.SortGameByTableNumberFromRn(1)
 }
 
 func getRandName(length int) string {
