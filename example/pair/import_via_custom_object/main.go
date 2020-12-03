@@ -4,6 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"github.com/realjustice/swiss-pairing-engine/src/gotha"
+	"math/rand"
+	"strings"
+	"time"
 )
 
 var (
@@ -12,34 +15,29 @@ var (
 )
 
 func main() {
+
 	flag.Parse()
 	g := gotha.NewGotha()
 	// Step1 init pair object
 	tournament := gotha.NewTournament()
-	// add player black
-	player1 := gotha.NewPlayer()
-	player1.SetName("Karadaban")
-	player1.SetFirstName("Denis")
 
-	player1.SetParticipatingStr("111111111111111") // 是否参与每一轮的编排
-	player1.SetRank(50)
-	tournament.AddPlayer(player1)
+	for i := 0; i < 12; i++ {
+		player := gotha.NewPlayer()
+		player.SetName(getRandName(8))
+		player.SetFirstName(getRandName(5) + "")
 
-	// white
-	player2 := gotha.NewPlayer()
-	player2.SetName("Wu")
-	player2.SetFirstName("Beilun")
-	player2.SetParticipatingStr("111111111111111") // 是否参与每一轮的编排
+		player.SetParticipatingStr("111111111111111") // 是否参与每一轮的编排
+		player.SetRank(getRandScore())
+		tournament.AddPlayer(player)
+	}
 
-	player2.SetRank(2556)
-	tournament.AddPlayer(player2)
 	// bye player
-	byePlayer := gotha.NewPlayer()
-	byePlayer.SetName("Granger")
-	byePlayer.SetFirstName("Alban")
-	byePlayer.SetParticipatingStr("111111111111111") // 是否参与每一轮的编排
-	byePlayer.SetRank(100)
-	tournament.AddPlayer(byePlayer)
+	//byePlayer := gotha.NewPlayer()
+	//byePlayer.SetName("Granger")
+	//byePlayer.SetFirstName("Alban")
+	//byePlayer.SetParticipatingStr("111111111111111") // 是否参与每一轮的编排
+	//byePlayer.SetRank(100)
+	//tournament.AddPlayer(byePlayer)
 
 	// add game
 	//game := gotha.NewGame()
@@ -67,10 +65,24 @@ func main() {
 	// Step3 pair
 	t.Pair(*round)
 
-	t.GetByePlayer(1)
-	t.SetByePlayer(1, "GRANGERALBAN")
-
 	for _, game := range t.SortGameByTableNumber() {
 		fmt.Printf("white : %s  <> black : %s\n", game.GetWhitePlayer().Name+" "+game.GetWhitePlayer().FirstName, game.GetBlackPlayer().Name+" "+game.GetBlackPlayer().FirstName)
 	}
+	t.SortGameByTableNumberFromRn(1)
+}
+
+func getRandName(length int) string {
+	rand.Seed(time.Now().UnixNano())
+	str := make([]byte, length)
+	for i := 0; i < length; i++ {
+		char := rand.Intn(26)
+		str[i] = "a"[0] + uint8(char)
+	}
+
+	return strings.ToUpper(string(str))
+}
+
+func getRandScore() int {
+	rand.Seed(time.Now().UnixNano())
+	return rand.Intn(2050)
 }

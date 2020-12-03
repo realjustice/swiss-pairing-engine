@@ -957,6 +957,15 @@ func (t *Tournament) SortGameByTableNumber() []*Game {
 	return games
 }
 
+func (t *Tournament) SortGameByTableNumberFromRn(rn int) []*Game {
+	allGames := t.SortGameByTableNumber()
+	games := make([]*Game, 0)
+	for _, v := range allGames {
+		games = append(games, v)
+	}
+	return games
+}
+
 func (t *Tournament) SetGameResult(rn int, tableNumber int, result string) {
 	rn--
 	game := t.getGameByRoundAndTable(rn, tableNumber)
