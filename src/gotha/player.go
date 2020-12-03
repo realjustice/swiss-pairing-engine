@@ -23,8 +23,8 @@ func (p *Player) Category(gps *parameter_set.GeneralParameterSet) int {
 	return 0
 }
 
-func (p *Player) SetKeyString(keyStr string) string {
-	return p.keyString
+func (p *Player) SetKeyString(keyStr string) {
+	p.keyString = keyStr
 }
 
 func deepCopyPlayer(player *Player) *Player {
