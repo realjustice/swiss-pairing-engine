@@ -5,6 +5,7 @@ import (
 	"github.com/realjustice/swiss-pairing-engine/src/parameter_set"
 	"math"
 	"sort"
+	"strings"
 )
 
 type Tournament struct {
@@ -45,6 +46,10 @@ func (t *Tournament) SetTournamentSet(set *parameter_set.TournamentParameterSet)
 }
 
 func (t *Tournament) AddPlayer(p *Player) {
+	if p.keyString == "" {
+		p.keyString = strings.ToUpper(p.Name + p.FirstName)
+	}
+
 	t.hmPlayers[p.GetKeyString()] = p
 }
 

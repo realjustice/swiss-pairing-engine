@@ -2,7 +2,6 @@ package gotha
 
 import (
 	"github.com/realjustice/swiss-pairing-engine/src/parameter_set"
-	"strings"
 )
 
 type Player struct {
@@ -25,10 +24,6 @@ func (p *Player) Category(gps *parameter_set.GeneralParameterSet) int {
 }
 
 func (p *Player) SetKeyString(keyStr string) string {
-	if keyStr == "" {
-		p.keyString = strings.ToUpper(p.Name + p.FirstName)
-	}
-	p.keyString = keyStr
 	return p.keyString
 }
 
