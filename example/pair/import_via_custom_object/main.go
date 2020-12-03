@@ -33,6 +33,14 @@ func main() {
 
 	player2.SetRank(2556)
 	tournament.AddPlayer(player2)
+	// bye player
+	byePlayer := gotha.NewPlayer()
+	byePlayer.SetName("Granger")
+	byePlayer.SetFirstName("Alban")
+	byePlayer.SetParticipatingStr("111111111111111") // 是否参与每一轮的编排
+	byePlayer.SetRank(100)
+	tournament.AddPlayer(byePlayer)
+
 	// add game
 	//game := gotha.NewGame()
 	//game.SetRoundNumber(0)
@@ -58,6 +66,9 @@ func main() {
 	t.SetSelectedPlayers()
 	// Step3 pair
 	t.Pair(*round)
+
+	t.GetByePlayer(1)
+	t.SetByePlayer(1, "GRANGERALBAN")
 
 	for _, game := range t.SortGameByTableNumber() {
 		fmt.Printf("white : %s  <> black : %s\n", game.GetWhitePlayer().Name+" "+game.GetWhitePlayer().FirstName, game.GetBlackPlayer().Name+" "+game.GetBlackPlayer().FirstName)

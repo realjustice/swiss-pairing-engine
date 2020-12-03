@@ -147,6 +147,23 @@ func (i *InputOutput) importGamesFromXML(tournament *Tournament) (games []*Game,
 	return games, err
 }
 
+func (i *InputOutput) importByePlayersFromXML(tournament *Tournament) {
+	byePlayersXML := i.Root.SelectElement("ByePlayers")
+	if byePlayersXML == nil {
+		return
+	}
+	byePlayerXML := byePlayersXML.SelectElements("ByePlayer")
+	if byePlayerXML == nil {
+		return
+	}
+	for _, v := range byePlayerXML {
+		keyString := v.SelectAttrValue("player", "")
+		roundNumberStr := v.SelectAttrValue("roundNumber", "")
+		roundNumber, _ := strconv.Atoi(roundNumberStr)
+		tournament.setByePlayer(roundNumber, keyString)
+	}
+}
+
 func (i *InputOutput) importGeneralParameterSetFromXML(tournament *Tournament) {
 	gps := tournament.tournamentParameterSet.GetGeneralParameterSet()
 	tprXML := i.Root.SelectElement("TournamentParameterSet")

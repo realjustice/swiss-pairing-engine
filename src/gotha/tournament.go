@@ -971,6 +971,18 @@ func (t *Tournament) getByePlayer(roundNumber int) *Player {
 	return t.byePlayers[roundNumber]
 }
 
+func (t *Tournament) SetByePlayer(roundNumber int, keyString string) {
+	roundNumber--
+	t.setByePlayer(roundNumber, keyString)
+}
+
+func (t *Tournament) setByePlayer(roundNumber int, keyString string) {
+	if t.byePlayers == nil {
+		t.byePlayers = make([]*Player, MAX_NUMBER_OF_ROUNDS)
+	}
+	t.byePlayers[roundNumber] = t.GetPlayerByKeyString(keyString)
+}
+
 func (t *Tournament) GetByePlayer(roundNumber int) *Player {
 	roundNumber--
 	return t.getByePlayer(roundNumber)
