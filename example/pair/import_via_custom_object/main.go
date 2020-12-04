@@ -21,11 +21,17 @@ func main() {
 	// Step1 init pair object
 	tournament := gotha.NewTournament()
 
+	blackKeyStrings, whiteKeyStrings := make([]string, 0), make([]string, 0)
+
 	for i := 0; i < 12; i++ {
 		player := gotha.NewPlayer()
 		player.SetName(getRandName(8))
 		player.SetFirstName(getRandName(5) + "")
-
+		if i%2 == 0 {
+			blackKeyStrings = append(blackKeyStrings, strings.ToUpper(player.Name+player.FirstName))
+		} else {
+			whiteKeyStrings = append(whiteKeyStrings, strings.ToUpper(player.Name+player.FirstName))
+		}
 		player.SetParticipatingStr("111111111111111") // 是否参与每一轮的编排
 		player.SetRank(getRandScore())
 		tournament.AddPlayer(player)
@@ -40,17 +46,19 @@ func main() {
 	//tournament.AddPlayer(byePlayer)
 
 	// add game
-	//game := gotha.NewGame()
-	//game.SetRoundNumber(0)
-	//game.SetResult(gotha.SelectResult("RESULT_UNKNOWN"))
-	//game.SetTableNumber(1)
-	//game.SetHandicap(0)
-	//game.SetKnownColor(true)
-	//bPlayerKeyString := "KARADABANDENIS"
-	//wPlayerKeyString := "WUBEILUN"
-	//game.SetBlackPlayer(tournament.GetPlayerByKeyString(bPlayerKeyString))
-	//game.SetWhitePlayer(tournament.GetPlayerByKeyString(wPlayerKeyString))
-	//tournament.AddGame(game)
+	for i := 0; i < 6; i++ {
+		game := gotha.NewGame()
+		game.SetRoundNumber(0)
+		game.SetResult(gotha.SelectResult("RESULT_WHITEWINS"))
+		game.SetTableNumber(i)
+		game.SetHandicap(0)
+		game.SetKnownColor(true)
+		bPlayerKeyString := blackKeyStrings[i]
+		wPlayerKeyString := whiteKeyStrings[i]
+		game.SetBlackPlayer(tournament.GetPlayerByKeyString(bPlayerKeyString))
+		game.SetWhitePlayer(tournament.GetPlayerByKeyString(wPlayerKeyString))
+		tournament.AddGame(game)
+	}
 
 	gps := tournament.GetTournamentSet().GetGeneralParameterSet()
 	gps.SetNumberOfRounds(10)
@@ -62,9 +70,10 @@ func main() {
 	// By default, all players participate in this round
 	//t.SetSelectedPlayers()
 
-	// Step3 pair and you will get a game iterator
+	// Step3 pair and you will get a game iterator（current roundNumber）
 	t.Pair(*round).Walk(func(game *gotha.Game) (isStop bool) {
 		fmt.Printf("white : %s  <> black : %s\n", game.GetWhitePlayer().Name+" "+game.GetWhitePlayer().FirstName, game.GetBlackPlayer().Name+" "+game.GetBlackPlayer().FirstName)
+		fmt.Println(game.TableNumber)
 		return false
 	})
 }

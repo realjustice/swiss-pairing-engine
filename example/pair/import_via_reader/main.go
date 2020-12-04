@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	round  = flag.Int("round", 1, "The round number")
+	round  = flag.Int("round", 2, "The round number")
 	system = flag.String("system", "SWISS", "the pair system")
 )
 
@@ -23,8 +23,9 @@ func main() {
 
 	// Step2 import the data resource
 	// you can import from the xml file
-	filePath := `../demo.xml` //  your file path
-	//importFromXMLFile(filePath, g)
+	pwd, _ := os.Getwd()
+	filePath := pwd + `/example/demo.xml` //  your file path
+	importFromXMLFile(filePath, g)
 
 	// or from bytes
 	// importFromBytes(filePath, g)
@@ -37,15 +38,18 @@ func main() {
 
 	// Step4 choose the players （via keyString）
 	// By default, all players participate in this round
-	t.SetSelectedPlayers([]string{"KARADABANDENIS", "WUBEILUN"})
+	//t.SetSelectedPlayers([]string{"KARADABANDENIS", "WUBEILUN"})
+
 	// Step5 pair
-	t.Pair(*round)
-	for _, game := range t.SortGameByTableNumber() {
-		fmt.Printf("white : %s  <> black : %s\n", game.GetWhitePlayer().Name+" "+game.GetWhitePlayer().FirstName, game.GetBlackPlayer().Name+" "+game.GetBlackPlayer().FirstName)
-	}
+	newGames := make([]*gotha.Game, 0)
+	t.Pair(*round).Walk(func(game *gotha.Game) (isStop bool) {
+		fmt.Printf("white : %s  <> black : %s  tableNumber:%d \n", game.GetWhitePlayer().Name+" "+game.GetWhitePlayer().FirstName, game.GetBlackPlayer().Name+" "+game.GetBlackPlayer().FirstName, game.GetTableNumber())
+		newGames = append(newGames, game)
+		return false
+	})
 
 	//  Step6 you will get a io.reader
-	rd, err := g.IO.FlushGameToXML(t.SortGameByTableNumber())
+	rd, err := g.IO.FlushGameToXML(newGames)
 	if err != nil {
 		log.Fatal(err)
 	}

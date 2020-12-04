@@ -297,28 +297,33 @@ func (t *Tournament) Pair(roundNumber int) *TournamentIterator {
 	}
 
 	alNewGames, isSucceed := t.MakeAutomaticPairing(roundNumber)
-	tN := 0
 
-	if isSucceed {
-		for _, g := range alNewGames {
+	if !isSucceed {
+		return nil
+	}
+	tN := 0
+	for _, g := range alNewGames {
+		stop := true
+
+		f := func() {
+			stop = true
 			oldGames := t.gamesList(roundNumber)
-			stop := true
-			f := func() {
-				stop = true
-				for _, oldG := range oldGames {
-					if oldG.GetTableNumber() == tN {
-						tN++
-						stop = false
-					}
+			for _, oldG := range oldGames {
+				if oldG.GetRoundNumber() != roundNumber {
+					continue
+				}
+				if oldG.GetTableNumber() == tN {
+					tN++
+					stop = false
 				}
 			}
-			f()
-			for !stop {
-				f()
-			}
-			tN++
-			g.SetTableNumber(tN)
 		}
+		f()
+		for !stop {
+			f()
+		}
+		tN++
+		g.SetTableNumber(tN)
 	}
 	for _, g := range alNewGames {
 		t.AddGame(g)

@@ -141,7 +141,7 @@ func (i *InputOutput) importGamesFromXML(tournament *Tournament) (games []*Game,
 		g.SetWhitePlayer(tournament.GetPlayerByKeyString(gameXML.SelectAttrValue("whitePlayer", "")))
 		g.SetKnownColor(true)
 		g.SetResult(SelectResult(gameXML.SelectAttrValue("result", "")))
-		g.SetTableNumber(tableNumber)
+		g.SetTableNumber(tableNumber - 1)
 		games = append(games, g)
 	}
 	return games, err
@@ -183,13 +183,9 @@ func (i *InputOutput) FlushGameToXML(games []*Game) (io.Reader, error) {
 	gamesXML := i.Root.SelectElement("Games")
 	if gamesXML == nil {
 		gamesXML = i.Root.CreateElement("Games")
-	} else {
-		// delete before create
-		for _, g := range gamesXML.SelectElements("Game") {
-			gamesXML.RemoveChild(g)
-		}
 	}
-	for _, g := range games {
+	count := len(gamesXML.ChildElements())
+	for index, g := range games {
 		gameXML := gamesXML.CreateElement("Game")
 		gameXML.CreateAttr("blackPlayer", g.blackPlayer.keyString)
 		gameXML.CreateAttr("handicap", strconv.Itoa(g.GetHandicap()))
@@ -198,6 +194,7 @@ func (i *InputOutput) FlushGameToXML(games []*Game) (io.Reader, error) {
 		gameXML.CreateAttr("roundNumber", strconv.Itoa(g.GetRoundNumber()+1))
 		gameXML.CreateAttr("tableNumber", strconv.Itoa(g.GetTableNumber()))
 		gameXML.CreateAttr("whitePlayer", g.whitePlayer.keyString)
+		gamesXML.InsertChildAt(index+count, gameXML)
 	}
 	i.Doc.Indent(2)
 
