@@ -26,6 +26,32 @@ type Tournament struct {
 	byePlayers []*Player
 }
 
+type TournamentIterator struct {
+	data  []*Game
+	index int
+}
+
+func (ti *TournamentIterator) HasNext() bool {
+	if ti.data == nil {
+		return false
+	}
+	return ti.index < len(ti.data)
+}
+
+func (ti *TournamentIterator) Walk(f func(g *Game) (isStop bool)) {
+	for ti.HasNext() {
+		isStop := f(ti.data[ti.index])
+		if isStop {
+			break
+		}
+		ti.index++
+	}
+}
+
+func NewTournamentIterator(data []*Game) *TournamentIterator {
+	return &TournamentIterator{data: data}
+}
+
 func NewTournament() *Tournament {
 	t := new(Tournament)
 	t.tournamentParameterSet = parameter_set.NewTournamentParameterSet()
@@ -250,7 +276,11 @@ func (t *Tournament) MakeAutomaticPairing(roundNumber int) ([]*Game, bool) {
 	return alGames, true
 }
 
-func (t *Tournament) Pair(roundNumber int) {
+func (t *Tournament) Pair(roundNumber int) *TournamentIterator {
+	if len(t.selectedPlayers) == 0 || t.selectedPlayers == nil {
+		t.SetSelectedPlayers()
+	}
+
 	roundNumber--
 	if len(t.selectedPlayers)%2 != 0 {
 		// set bye player
@@ -293,6 +323,7 @@ func (t *Tournament) Pair(roundNumber int) {
 	for _, g := range alNewGames {
 		t.AddGame(g)
 	}
+	return NewTournamentIterator(alNewGames)
 }
 
 func (t *Tournament) fillBaseScoringInfoIfNecessary() {

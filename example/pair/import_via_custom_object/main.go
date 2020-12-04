@@ -55,19 +55,18 @@ func main() {
 	gps := tournament.GetTournamentSet().GetGeneralParameterSet()
 	gps.SetNumberOfRounds(10)
 	g.SetTournament(tournament)
-	fmt.Println(g.GetTournament().GetTournamentSet().GetGeneralParameterSet().GetNumberOfRounds())
 	t := g.GetTournament()
 	g.SelectSystem(*system)
 
 	// Step2 choose the players （via keyString）
 	// By default, all players participate in this round
-	t.SetSelectedPlayers()
-	// Step3 pair
-	t.Pair(*round)
+	//t.SetSelectedPlayers()
 
-	for _, game := range t.SortGameByTableNumberFromRn(1) {
+	// Step3 pair and you will get a game iterator
+	t.Pair(*round).Walk(func(game *gotha.Game) (isStop bool) {
 		fmt.Printf("white : %s  <> black : %s\n", game.GetWhitePlayer().Name+" "+game.GetWhitePlayer().FirstName, game.GetBlackPlayer().Name+" "+game.GetBlackPlayer().FirstName)
-	}
+		return false
+	})
 }
 
 func getRandName(length int) string {
