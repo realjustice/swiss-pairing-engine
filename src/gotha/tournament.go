@@ -930,7 +930,7 @@ func (t *Tournament) gameBetween(sP1 *ScoredPlayer, sP2 *ScoredPlayer, roundNumb
 
 	g.SetKnownColor(true)
 	g.SetResult(RESULT_UNKNOWN)
-	g.SetRoundNumber(roundNumber)
+	g.setRoundNumber(roundNumber)
 
 	return g
 }

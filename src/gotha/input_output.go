@@ -136,7 +136,7 @@ func (i *InputOutput) importGamesFromXML(tournament *Tournament) (games []*Game,
 		if err != nil {
 			return games, err
 		}
-		g.SetRoundNumber(roundNumber - 1)
+		g.setRoundNumber(roundNumber - 1)
 		g.SetBlackPlayer(tournament.GetPlayerByKeyString(gameXML.SelectAttrValue("blackPlayer", "")))
 		g.SetWhitePlayer(tournament.GetPlayerByKeyString(gameXML.SelectAttrValue("whitePlayer", "")))
 		g.SetKnownColor(true)

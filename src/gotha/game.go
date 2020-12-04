@@ -62,8 +62,13 @@ func (g *Game) SetResult(result int) {
 	g.result = result
 }
 
-func (g *Game) SetRoundNumber(roundNumber int) {
+func (g *Game) setRoundNumber(roundNumber int) {
 	g.RoundNumber = roundNumber
+}
+
+func (g *Game) SetRoundNumber(roundNumber int) {
+	roundNumber--
+	g.setRoundNumber(roundNumber)
 }
 
 func (g *Game) SetTableNumber(tableNumber int) {
