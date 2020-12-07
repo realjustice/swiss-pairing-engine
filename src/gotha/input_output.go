@@ -68,6 +68,8 @@ func (i *InputOutput) ImportFromReader(ri io.Reader, t *Tournament) error {
 		if err != nil {
 			return err
 		}
+		t.selectedPlayers = make([]*Player, len(players))
+		copy(t.selectedPlayers, players)
 		for _, p := range players {
 			t.AddPlayer(p)
 		}
@@ -185,6 +187,7 @@ func (i *InputOutput) FlushGameToXML(games []*Game) (io.Reader, error) {
 		gamesXML = i.Root.CreateElement("Games")
 	}
 	count := len(gamesXML.ChildElements())
+
 	for index, g := range games {
 		gameXML := gamesXML.CreateElement("Game")
 		gameXML.CreateAttr("blackPlayer", g.blackPlayer.keyString)

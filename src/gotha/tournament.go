@@ -123,7 +123,7 @@ func (t *Tournament) FillPairingInfo(roundNumber int) {
 			if len(alSPGroup) <= 0 {
 				continue
 			}
-			// 压入一个规则，（第一轮的时候增加rating规则，其余情况不压入规则！！）
+			// 压入一个规则，（会在规则数组的尾部压入rating规则，用来保证选手的排名是有序的）
 			crit := pps.GetPlaCriteria()
 			additionalCrit := paiPs.GetPaiMaAdditionalPlacementCritSystem1()
 			if roundNumber > paiPs.GetPaiMaLastRoundForSeedSystem1() {
@@ -254,33 +254,84 @@ func (t *Tournament) MakeAutomaticPairing(roundNumber int) ([]*Game, bool) {
 		return nil, false
 	}
 
+	gps := t.tournamentParameterSet.GetGeneralParameterSet()
+	pps := t.tournamentParameterSet.GetPlacementParameterSet()
+
 	t.fillBaseScoringInfoIfNecessary()
 
 	// fill pairing info
 	t.FillPairingInfo(roundNumber)
+	// todo 当前只支持swiss
+	mainCrit := pps.MainCriterion()
 	// todo getGamesListBefore()
 	alPreviousGames := t.gamesListBefore(roundNumber)
 
-	// todo 大于300人的比赛暂未处理
+	mainScoreMin := 0
+	mainScoreMax := roundNumber
 
 	alRemainingPlayers := make([]*Player, len(alPlayersToPair))
 	copy(alRemainingPlayers, alPlayersToPair)
+	var alg []*Game
+	alGames := make([]*Game, 0)
+	// todo 大于300人的比赛暂未处理
+	for len(alRemainingPlayers) > PAIRING_GROUP_MAX_SIZE {
+		bGroupReady := false
+
+		alGroupedPlayers := struct {
+			data []*Player
+		}{}
+		alGroupedPlayers.data = make([]*Player, 0)
+
+		for cat := 0; cat < gps.GetNumberOfCategories(); cat++ {
+			for mainScore := mainScoreMax; mainScore >= mainScoreMin; mainScore-- {
+				for it := NewPlayerIterator(&alRemainingPlayers); it.HasNext(); {
+					p := it.Next()
+					if p.Category(gps) > cat {
+						continue
+					}
+					sp := t.hmScoredPlayers[p.GetKeyString()]
+					if sp.GetCritValue(mainCrit, roundNumber-1)/2 < mainScore {
+						continue
+					}
+					alGroupedPlayers.data = append(alGroupedPlayers.data, p)
+					it.Remove()
+					// 2 Emergency breaks
+					if len(alGroupedPlayers.data) >= PAIRING_GROUP_MAX_SIZE {
+						bGroupReady = true
+						break
+					}
+					if len(alRemainingPlayers) <= PAIRING_GROUP_MIN_SIZE {
+						bGroupReady = true
+						break
+					}
+				}
+				// Is the group ready for pairing ?
+				if len(alGroupedPlayers.data) >= PAIRING_GROUP_MIN_SIZE && len(alGroupedPlayers.data)%2 == 0 {
+					bGroupReady = true
+				}
+				if bGroupReady {
+					break
+				}
+			}
+			if bGroupReady {
+				break
+			}
+		}
+		alg = t.pairAGroup(alGroupedPlayers.data, roundNumber, t.hmScoredPlayers, alPreviousGames)
+		alGames = append(alGames, alg...)
+	}
 
 	t.FillPairingInfo(roundNumber)
 
-	alg := t.pairAGroup(alRemainingPlayers, roundNumber, t.hmScoredPlayers, alPreviousGames)
-	alGames := make([]*Game, len(alg))
+	alg = t.pairAGroup(alRemainingPlayers, roundNumber, t.hmScoredPlayers, alPreviousGames)
+
 	// fill game
-	copy(alGames, alg)
+	alGames = append(alGames, alg...)
 
 	return alGames, true
 }
 
 func (t *Tournament) Pair(roundNumber int) *TournamentIterator {
-	if len(t.selectedPlayers) == 0 || t.selectedPlayers == nil {
-		t.SetSelectedPlayers()
-	}
-
 	roundNumber--
 	if len(t.selectedPlayers)%2 != 0 {
 		// set bye player
@@ -939,15 +990,9 @@ func (t *Tournament) GetPlayerByKeyString(strNaFi string) *Player {
 	return t.hmPlayers[strNaFi]
 }
 
-func (t *Tournament) SetSelectedPlayers(strNaFis ...[]string) {
-	if len(strNaFis) == 0 {
-		for _, player := range t.hmPlayers {
-			t.selectedPlayers = append(t.selectedPlayers, player)
-		}
-	} else {
-		for _, keyString := range strNaFis[0] {
-			t.selectedPlayers = append(t.selectedPlayers, t.GetPlayerByKeyString(keyString))
-		}
+func (t *Tournament) SetSelectedPlayers(strNaFis []string) {
+	for _, keyString := range strNaFis {
+		t.selectedPlayers = append(t.selectedPlayers, t.GetPlayerByKeyString(keyString))
 	}
 }
 

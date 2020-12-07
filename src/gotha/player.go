@@ -15,6 +15,35 @@ type Player struct {
 	participating []bool
 }
 
+type PlayerIterator struct {
+	source *[]*Player
+	data   []*Player
+	index  int
+}
+
+func NewPlayerIterator(source *[]*Player) *PlayerIterator {
+	return &PlayerIterator{source: source, data: *source}
+}
+
+func (p *PlayerIterator) HasNext() bool {
+	if p.source == nil {
+		return false
+	}
+
+	return p.index < len(*p.source)
+}
+
+func (p *PlayerIterator) Next() *Player {
+	defer func() { p.index++ }()
+	return (*p.source)[p.index]
+}
+
+func (p *PlayerIterator) Remove() {
+	p.index--
+	p.data = append(p.data[:p.index], p.data[p.index+1:]...)
+	*p.source = p.data
+}
+
 func NewPlayer() *Player {
 	return &Player{}
 }

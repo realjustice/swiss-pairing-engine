@@ -23,7 +23,7 @@ func main() {
 
 	blackKeyStrings, whiteKeyStrings := make([]string, 0), make([]string, 0)
 
-	for i := 0; i < 12; i++ {
+	for i := 0; i < 400; i++ {
 		player := gotha.NewPlayer()
 		player.SetName(getRandName(8))
 		player.SetFirstName(getRandName(5) + "")
@@ -46,19 +46,19 @@ func main() {
 	//tournament.AddPlayer(byePlayer)
 
 	// add game
-	for i := 0; i < 6; i++ {
-		game := gotha.NewGame()
-		game.SetRoundNumber(0)
-		game.SetResult(gotha.SelectResult("RESULT_WHITEWINS"))
-		game.SetTableNumber(i)
-		game.SetHandicap(0)
-		game.SetKnownColor(true)
-		bPlayerKeyString := blackKeyStrings[i]
-		wPlayerKeyString := whiteKeyStrings[i]
-		game.SetBlackPlayer(tournament.GetPlayerByKeyString(bPlayerKeyString))
-		game.SetWhitePlayer(tournament.GetPlayerByKeyString(wPlayerKeyString))
-		tournament.AddGame(game)
-	}
+	//for i := 0; i < 6; i++ {
+	//	game := gotha.NewGame()
+	//	game.SetRoundNumber(0)
+	//	game.SetResult(gotha.SelectResult("RESULT_WHITEWINS"))
+	//	game.SetTableNumber(i)
+	//	game.SetHandicap(0)
+	//	game.SetKnownColor(true)
+	//	bPlayerKeyString := blackKeyStrings[i]
+	//	wPlayerKeyString := whiteKeyStrings[i]
+	//	game.SetBlackPlayer(tournament.GetPlayerByKeyString(bPlayerKeyString))
+	//	game.SetWhitePlayer(tournament.GetPlayerByKeyString(wPlayerKeyString))
+	//	tournament.AddGame(game)
+	//}
 
 	gps := tournament.GetTournamentSet().GetGeneralParameterSet()
 	gps.SetNumberOfRounds(10)
