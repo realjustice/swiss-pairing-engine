@@ -4,13 +4,14 @@ import (
 	"flag"
 	"fmt"
 	"github.com/realjustice/swiss-pairing-engine/src/gotha"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
 )
 
 var (
-	round  = flag.Int("round", 3, "The round number")
+	round  = flag.Int("round", 1, "The round number")
 	system = flag.String("system", "SWISS", "the pair system")
 )
 
@@ -48,21 +49,21 @@ func main() {
 	})
 
 	//  Step6 you will get a io.reader
-	//rd, err := g.IO.FlushGameToXML(newGames)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//
-	//// overwrite your xml file (Optional operation)
-	//file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_TRUNC, 0644)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//defer func() { _ = file.Close() }()
-	//_, err = io.Copy(file, rd)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
+	rd, err := g.IO.FlushGameToXML(newGames)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// overwrite your xml file (Optional operation)
+	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() { _ = file.Close() }()
+	_, err = io.Copy(file, rd)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func importFromXMLFile(filePath string, g *gotha.Gotha) {

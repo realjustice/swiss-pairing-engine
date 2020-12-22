@@ -26,19 +26,23 @@ type Tournament struct {
 	byePlayers []*Player
 }
 
-type TournamentIterator struct {
+type GameIterator struct {
 	data  []*Game
 	index int
 }
 
-func (ti *TournamentIterator) HasNext() bool {
+func (ti *GameIterator) HasNext() bool {
 	if ti.data == nil {
 		return false
 	}
 	return ti.index < len(ti.data)
 }
 
-func (ti *TournamentIterator) Walk(f func(g *Game) (isStop bool)) {
+func (ti *GameIterator) Walk(f func(g *Game) (isStop bool)) {
+	if ti == nil {
+		return
+	}
+
 	for ti.HasNext() {
 		isStop := f(ti.data[ti.index])
 		if isStop {
@@ -48,8 +52,8 @@ func (ti *TournamentIterator) Walk(f func(g *Game) (isStop bool)) {
 	}
 }
 
-func NewTournamentIterator(data []*Game) *TournamentIterator {
-	return &TournamentIterator{data: data}
+func NewGameIterator(data []*Game) *GameIterator {
+	return &GameIterator{data: data}
 }
 
 func NewTournament() *Tournament {
@@ -77,6 +81,7 @@ func (t *Tournament) AddPlayer(p *Player) {
 	}
 
 	t.hmPlayers[p.GetKeyString()] = p
+	t.selectedPlayers = append(t.selectedPlayers, p)
 }
 
 func (t *Tournament) AddGame(g *Game) bool {
@@ -317,13 +322,13 @@ func (t *Tournament) MakeAutomaticPairing(roundNumber int) ([]*Game, bool) {
 				break
 			}
 		}
-		alg = t.pairAGroup(alGroupedPlayers.data, roundNumber, t.hmScoredPlayers, alPreviousGames)
+		alg = t.pairAGroup(alGroupedPlayers.data, roundNumber, alPreviousGames)
 		alGames = append(alGames, alg...)
 	}
 
 	t.FillPairingInfo(roundNumber)
 
-	alg = t.pairAGroup(alRemainingPlayers, roundNumber, t.hmScoredPlayers, alPreviousGames)
+	alg = t.pairAGroup(alRemainingPlayers, roundNumber, alPreviousGames)
 
 	// fill game
 	alGames = append(alGames, alg...)
@@ -331,7 +336,11 @@ func (t *Tournament) MakeAutomaticPairing(roundNumber int) ([]*Game, bool) {
 	return alGames, true
 }
 
-func (t *Tournament) Pair(roundNumber int) *TournamentIterator {
+func (t *Tournament) Pair(roundNumber int) *GameIterator {
+	if t.selectedPlayers == nil {
+		return nil
+	}
+
 	roundNumber--
 	if len(t.selectedPlayers)%2 != 0 {
 		// set bye player
@@ -379,7 +388,66 @@ func (t *Tournament) Pair(roundNumber int) *TournamentIterator {
 	for _, g := range alNewGames {
 		t.AddGame(g)
 	}
-	return NewTournamentIterator(alNewGames)
+	return NewGameIterator(alNewGames)
+}
+
+func (t *Tournament) BergerArrange() *GameIterator {
+	games := make([]*Game, 0)
+	var lastPlayer *Player
+	n := len(t.selectedPlayers)
+	if n%2 == 0 {
+		lastPlayer = t.selectedPlayers[n-1]
+	}
+
+	moves := (n+n%2-4)/2 + 1
+	round := n
+	if n%2 == 0 {
+		round--
+	}
+	head, tail := 0, n
+
+	ringBuffer := func(nums []*Player, head int, tail int, n int) []*Player {
+		players := make([]*Player, 0)
+		for head != tail {
+			players = append(players, nums[head%n])
+			head++
+		}
+		return players
+	}
+
+	for i := 1; i <= round; i++ {
+		newPlayers := ringBuffer(t.selectedPlayers, head, tail, n)
+		newPlayers = append(newPlayers, lastPlayer)
+		if round%2 == 0 {
+			// swap
+			newPlayers[0], newPlayers[len(newPlayers)-1] = newPlayers[len(newPlayers)-1], newPlayers[0]
+		}
+
+		// two point
+		l, r := 0, len(newPlayers)-1
+		tableNumber := 0
+		for l < r {
+			l++
+			r--
+			tableNumber++
+
+			if newPlayers[l] == nil {
+				t.setByePlayer(i, newPlayers[r].GetKeyString())
+				continue
+			}
+			if newPlayers[r] == nil {
+				t.setByePlayer(i, newPlayers[l].GetKeyString())
+				continue
+			}
+
+			game := &Game{RoundNumber: i, TableNumber: tableNumber, KnownColor: true, Handicap: 0, result: UNKNOWN, blackPlayer: newPlayers[l-1], whitePlayer: newPlayers[r-1]}
+			games = append(games, game)
+		}
+
+		head += n - moves
+		tail += n - moves
+	}
+	return NewGameIterator(games)
 }
 
 func (t *Tournament) fillBaseScoringInfoIfNecessary() {
@@ -670,7 +738,7 @@ func (t *Tournament) gamesList(roundNumber int) []*Game {
 	return gL
 }
 
-func (t *Tournament) pairAGroup(alGroupedPlayers []*Player, roundNumber int, hmScoredPlayers map[string]*ScoredPlayer, alPreviousGames []*Game) []*Game {
+func (t *Tournament) pairAGroup(alGroupedPlayers []*Player, roundNumber int, alPreviousGames []*Game) []*Game {
 	// 分组数量
 	numberOfPlayersInGroup := len(alGroupedPlayers)
 
