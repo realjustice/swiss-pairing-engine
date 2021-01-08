@@ -395,15 +395,17 @@ func (t *Tournament) BergerArrange() *GameIterator {
 	games := make([]*Game, 0)
 	var lastPlayer *Player
 	n := len(t.selectedPlayers)
-	if n%2 == 0 {
-		lastPlayer = t.selectedPlayers[n-1]
-	}
-
 	moves := (n+n%2-4)/2 + 1
 	round := n
 	if n%2 == 0 {
 		round--
 	}
+	if n%2 == 0 {
+		lastPlayer = t.selectedPlayers[n-1]
+		t.selectedPlayers = t.selectedPlayers[:n-1]
+		n--
+	}
+
 	head, tail := 0, n
 
 	ringBuffer := func(nums []*Player, head int, tail int, n int) []*Player {
@@ -427,21 +429,24 @@ func (t *Tournament) BergerArrange() *GameIterator {
 		l, r := 0, len(newPlayers)-1
 		tableNumber := 0
 		for l < r {
-			l++
-			r--
 			tableNumber++
-
 			if newPlayers[l] == nil {
-				t.setByePlayer(i, newPlayers[r].GetKeyString())
+				t.SetByePlayer(i, newPlayers[r].GetKeyString())
+				l++
+				r--
 				continue
 			}
 			if newPlayers[r] == nil {
-				t.setByePlayer(i, newPlayers[l].GetKeyString())
+				t.SetByePlayer(i, newPlayers[l].GetKeyString())
+				l++
+				r--
 				continue
 			}
 
-			game := &Game{RoundNumber: i, TableNumber: tableNumber, KnownColor: true, Handicap: 0, result: UNKNOWN, blackPlayer: newPlayers[l-1], whitePlayer: newPlayers[r-1]}
+			game := &Game{RoundNumber: i, TableNumber: tableNumber, KnownColor: true, Handicap: 0, result: UNKNOWN, blackPlayer: newPlayers[l], whitePlayer: newPlayers[r]}
 			games = append(games, game)
+			l++
+			r--
 		}
 
 		head += n - moves

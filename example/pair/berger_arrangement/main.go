@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/realjustice/swiss-pairing-engine/src/gotha"
 	"math/rand"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -12,26 +13,23 @@ func main() {
 	// init tournament
 	tournament := gotha.NewTournament()
 
-	blackKeyStrings, whiteKeyStrings := make([]string, 0), make([]string, 0)
-
-	for i := 0; i < 51; i++ {
+	for i := 1; i <= 7; i++ {
 		player := gotha.NewPlayer()
-		player.SetName(getRandName(8))
-		player.SetFirstName(getRandName(5) + "")
-		if i%2 == 0 {
-			blackKeyStrings = append(blackKeyStrings, strings.ToUpper(player.Name+player.FirstName))
-		} else {
-			whiteKeyStrings = append(whiteKeyStrings, strings.ToUpper(player.Name+player.FirstName))
-		}
-		player.SetParticipatingStr("111111111111111") // 是否参与每一轮的编排
+		player.SetName(strconv.Itoa(i))
 		player.SetRank(getRandScore())
 		tournament.AddPlayer(player)
 	}
 
 	tournament.BergerArrange().Walk(func(game *gotha.Game) (isStop bool) {
-		fmt.Printf("white : %s  <> black : %s tableNumber:%d roundNumber:%d \n", game.GetWhitePlayer().Name+" "+game.GetWhitePlayer().FirstName, game.GetBlackPlayer().Name+" "+game.GetBlackPlayer().FirstName, game.TableNumber, game.RoundNumber)
+		fmt.Printf("black : %s  <> white : %s tableNumber:%d roundNumber:%d \n", game.GetBlackPlayer().Name+" "+game.GetBlackPlayer().FirstName, game.GetWhitePlayer().Name+" "+game.GetWhitePlayer().FirstName, game.TableNumber, game.RoundNumber)
+
 		return false
 	})
+
+	for i := 1; i <= 7; i++ {
+		fmt.Printf("本轮轮空人员：%s\n", tournament.GetByePlayer(i).Name)
+	}
+
 }
 
 func getRandName(length int) string {
