@@ -24,7 +24,7 @@ func main() {
 	// Step2 import the data resource
 	// you can import from the xml file
 	//pwd, _ := os.Getwd()
-	filePath := `/Users/justice/Desktop/2020秋季围棋比赛1607313111.xml` //  your file path
+	filePath := `/Users/justice/Desktop/ssss1610103656.xml` //  your file path
 	importFromXMLFile(filePath, g)
 
 	// or from bytes
@@ -42,11 +42,13 @@ func main() {
 
 	// Step5 pair
 	newGames := make([]*gotha.Game, 0)
+	//t.SetSelectedPlayers([""])
 	t.Pair(*round).Walk(func(game *gotha.Game) (isStop bool) {
 		fmt.Printf("white : %s  <> black : %s  tableNumber:%d \n", game.GetWhitePlayer().Name+" "+game.GetWhitePlayer().FirstName, game.GetBlackPlayer().Name+" "+game.GetBlackPlayer().FirstName, game.GetTableNumber())
 		newGames = append(newGames, game)
 		return false
 	})
+	return
 
 	//  Step6 you will get a io.reader
 	rd, err := g.IO.FlushGameToXML(newGames)

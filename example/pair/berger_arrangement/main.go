@@ -29,7 +29,6 @@ func main() {
 	for i := 1; i <= 7; i++ {
 		fmt.Printf("本轮轮空人员：%s\n", tournament.GetByePlayer(i).Name)
 	}
-
 }
 
 func getRandName(length int) string {

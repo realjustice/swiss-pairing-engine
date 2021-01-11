@@ -10,10 +10,11 @@ import (
 )
 
 type InputOutput struct {
-	Doc      *etree.Document
-	Root     *etree.Element
-	bPlayers bool
-	bGames   bool
+	Doc        *etree.Document
+	Root       *etree.Element
+	bPlayers   bool
+	bGames     bool
+	bByePlayer bool
 }
 
 type OptionFunc func(input *InputOutput)
@@ -35,6 +36,12 @@ func WithGames() IOption {
 func WithPlayers() IOption {
 	return OptionFunc(func(io *InputOutput) {
 		io.bPlayers = true
+	})
+}
+
+func WithByePlayers() IOption {
+	return OptionFunc(func(io *InputOutput) {
+		io.bByePlayer = true
 	})
 }
 
@@ -68,11 +75,14 @@ func (i *InputOutput) ImportFromReader(ri io.Reader, t *Tournament) error {
 		if err != nil {
 			return err
 		}
-		t.selectedPlayers = make([]*Player, len(players))
-		copy(t.selectedPlayers, players)
+		//t.selectedPlayers = make([]*Player, len(players))
 		for _, p := range players {
 			t.AddPlayer(p)
 		}
+	}
+
+	if i.bByePlayer {
+		i.importByePlayersFromXML(t)
 	}
 
 	// 导入所有比赛对局
@@ -162,7 +172,7 @@ func (i *InputOutput) importByePlayersFromXML(tournament *Tournament) {
 		keyString := v.SelectAttrValue("player", "")
 		roundNumberStr := v.SelectAttrValue("roundNumber", "")
 		roundNumber, _ := strconv.Atoi(roundNumberStr)
-		tournament.setByePlayer(roundNumber, keyString)
+		tournament.SetByePlayer(roundNumber, keyString)
 	}
 }
 

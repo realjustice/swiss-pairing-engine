@@ -81,7 +81,7 @@ func (t *Tournament) AddPlayer(p *Player) {
 	}
 
 	t.hmPlayers[p.GetKeyString()] = p
-	t.selectedPlayers = append(t.selectedPlayers, p)
+	//t.selectedPlayers = append(t.selectedPlayers, p)
 }
 
 func (t *Tournament) AddGame(g *Game) bool {
@@ -108,7 +108,7 @@ func (t *Tournament) FillPairingInfo(roundNumber int) {
 	mainCrit := pps.MainCriterion()
 	mainScoreMin := 0
 	mainScoreMax := roundNumber
-	groupNumber := 0 // 有几轮就有几个groupNumber
+	groupNumber := 0 // group 的数量（比如第四轮结束一共有大分 8分，6分，4分，2分，0分的五类选手，则分为5个小组）
 
 	for cat := 0; cat < gps.GetNumberOfCategories(); cat++ {
 		for mainScore := mainScoreMax; mainScore >= mainScoreMin; mainScore-- {
@@ -118,7 +118,7 @@ func (t *Tournament) FillPairingInfo(roundNumber int) {
 					continue
 				}
 				// 获取到本轮为止的全胜人员
-				// 第一轮全体选手
+				// 第一轮为全体选手
 				if sp.GetCritValue(mainCrit, roundNumber-1)/2 != mainScore {
 					continue
 				}
@@ -252,6 +252,16 @@ func (t *Tournament) FillPairingInfo(roundNumber int) {
 	}
 }
 
+func (t *Tournament) getScoredPlayers() ScoredPlayers {
+	sps := make(ScoredPlayers, len(t.hmScoredPlayers))
+	i := 0
+	for _, sp := range t.hmScoredPlayers {
+		sps[i] = sp
+		i++
+	}
+	return sps
+}
+
 func (t *Tournament) MakeAutomaticPairing(roundNumber int) ([]*Game, bool) {
 	alPlayersToPair := t.selectedPlayers
 	// not even
@@ -338,9 +348,8 @@ func (t *Tournament) MakeAutomaticPairing(roundNumber int) ([]*Game, bool) {
 
 func (t *Tournament) Pair(roundNumber int) *GameIterator {
 	if t.selectedPlayers == nil {
-		return nil
+		t.selectedPlayers = getSelectedPlayerFromSPs(t.orderScoredPlayersList(roundNumber))
 	}
-
 	roundNumber--
 	if len(t.selectedPlayers)%2 != 0 {
 		// set bye player
@@ -455,6 +464,28 @@ func (t *Tournament) BergerArrange() *GameIterator {
 	return NewGameIterator(games)
 }
 
+func (t *Tournament) orderScoredPlayersList(roundNumber int) ScoredPlayers {
+	roundNumber--
+	t.fillBaseScoringInfoIfNecessary()
+	crit := t.tournamentParameterSet.GetPlacementParameterSet().GetPlaCriteria()
+	primaryCrit := make([]int, len(crit))
+	for iC := 0; iC < len(crit); iC++ {
+		primaryCrit[iC] = crit[iC]
+	}
+	alOrderedScoredPlayers := t.getScoredPlayers()
+	spc := NewScoredPlayerComparator(alOrderedScoredPlayers, primaryCrit, roundNumber)
+	sort.Sort(spc)
+	return alOrderedScoredPlayers
+}
+
+func getSelectedPlayerFromSPs(sps ScoredPlayers) []*Player {
+	players := make([]*Player, len(sps))
+	for i, p := range sps {
+		players[i] = p.Player
+	}
+	return players
+}
+
 func (t *Tournament) fillBaseScoringInfoIfNecessary() {
 	// 0) Preparation
 	// **************
@@ -542,121 +573,120 @@ func (t *Tournament) fillBaseScoringInfoIfNecessary() {
 			// select result
 			selectResult(bSP, wSP, g, r)
 		}
+	}
+	for _, sp := range t.hmScoredPlayers {
+		// 弃权或者轮空
+		nbPtsNBW2AbsentOrBye := 0
+		for r := 0; r < numberOfRoundsToCompute; r++ {
+			if sp.GetParticipation(r) == ABSENT { // 弃权
+				nbPtsNBW2AbsentOrBye += gps.GetGenNBW2ValueAbsent()
+			}
+			if sp.GetParticipation(r) == BYE {
+				nbPtsNBW2AbsentOrBye += gps.GetGenNBW2ValueBye()
+			}
 
+			sp.SetNBWX2(r, sp.GetNBWX2(r)+nbPtsNBW2AbsentOrBye)
+		}
+
+	}
+
+	// 4.1) SOSW, SOSWM1, SOSWM2,SODOSW
+	// soswX2 Sum of Opponents nbw2 对手总分
+	// soswM1X2 Sum of (n-1) Opponents nbw2 上一轮对手大分总和
+	// soswM2X2 Sum of (n-2) Opponents nbw2 上上轮对手大分总和
+	// sdswX4  Sum of Defeated Opponents nbw2 击败的对手分*2
+
+	for r := 0; r < numberOfRoundsToCompute; r++ {
 		for _, sp := range t.hmScoredPlayers {
-			// 弃权或者轮空
-			nbPtsNBW2AbsentOrBye := 0
-			for r := 0; r < numberOfRoundsToCompute; r++ {
-				if sp.GetParticipation(r) == ABSENT { // 弃权
-					nbPtsNBW2AbsentOrBye += gps.GetGenNBW2ValueAbsent()
-				}
-				if sp.GetParticipation(r) == BYE {
-					nbPtsNBW2AbsentOrBye += gps.GetGenNBW2ValueAbsent()
-				}
-
-				sp.SetNBWX2(r, sp.GetNBWX2(r)+nbPtsNBW2AbsentOrBye)
-			}
-
-		}
-
-		// 4.1) SOSW, SOSWM1, SOSWM2,SODOSW
-		// soswX2 Sum of Opponents nbw2 对手总分
-		// soswM1X2 Sum of (n-1) Opponents nbw2 上一轮对手大分总和
-		// soswM2X2 Sum of (n-2) Opponents nbw2 上上轮对手大分总和
-		// sdswX4  Sum of Defeated Opponents nbw2 击败的对手分*2
-
-		for r := 0; r < numberOfRoundsToCompute; r++ {
-			for _, sp := range t.hmScoredPlayers {
-				oswX2 := make([]int, numberOfRoundsToCompute)  // 对手每一轮的大分
-				doswX4 := make([]int, numberOfRoundsToCompute) // Defeated opponents score
-				for rr := 0; rr <= r; rr++ {
-					if sp.GetParticipation(rr) != PAIRED {
-						oswX2[rr] = 0
-						doswX4[rr] = 0
-					} else {
-						g := sp.GetGame(rr)
-						opp := t.opponent(g, sp.Player)
-						// 如果选手胜，result=2 ，和棋 result=1 else 0
-						result := getWX2(g, sp.Player)
-
-						sOpp := t.hmScoredPlayers[opp.GetKeyString()]
-						oswX2[rr] = sOpp.GetNBWX2(r)    // 对手的总分
-						doswX4[rr] = oswX2[rr] * result // 对手的总分*result
-					}
-				}
-				// 计算 soswM2X2，sdswX4
-				sosX2 := 0
-				sdsX4 := 0
-				// 为什么要再开一个循环？？
-				for rr := 0; rr <= r; rr++ {
-					sosX2 += oswX2[rr]
-					sdsX4 += doswX4[rr]
-				}
-				sp.SetSOSWX2(r, sosX2)
-				sp.SetSDSWX4(r, sdsX4)
-
-				sosM1X2 := 0
-				sosM2X2 := 0
-				// soswM1X2 Sum of (n-1) Opponents nbw2 上一轮对手大分总和
-				// soswM2X2 Sum of (n-2) Opponents nbw2 上上轮对手大分总和
-
-				if r == 0 {
-					sosM1X2 = 0
-					sosM2X2 = 0
-				} else if r == 1 {
-					sosM1X2 = max(oswX2[0], oswX2[1]) // oswX2>0 sosM1X2=oswX2 else sosM1X2=0
-					sosM2X2 = 0
+			oswX2 := make([]int, numberOfRoundsToCompute)  // 对手每一轮的大分
+			doswX4 := make([]int, numberOfRoundsToCompute) // Defeated opponents score
+			for rr := 0; rr <= r; rr++ {
+				if sp.GetParticipation(rr) != PAIRED {
+					oswX2[rr] = 0
+					doswX4[rr] = 0
 				} else {
-					rMin := 0
-					for rr := 1; rr <= r; rr++ {
-						if oswX2[rr] < oswX2[rMin] {
-							rMin = rr
-						}
-					}
-					rMin2 := 0
-					if rMin == 0 {
-						rMin2 = 1
-					}
-					for rr := 0; rr <= r; rr++ {
-						if rr == rMin {
-							continue
-						}
-						if oswX2[rr] < oswX2[rMin2] {
-							rMin2 = rr
-						}
-					}
-					// 一顿看不懂的操作之后，获取到了上轮的对手总分，和上上轮对手的总分
-					sosM1X2 = sp.GetSOSWX2(r) - oswX2[rMin]
-					sosM2X2 = sosM1X2 - oswX2[rMin2]
-				}
-				sp.SetSOSWM1X2(r, sosM1X2)
-				sp.SetSOSWM2X2(r, sosM2X2)
-			}
-		}
+					g := sp.GetGame(rr)
+					opp := t.opponent(g, sp.Player)
+					// 如果选手胜，result=2 ，和棋 result=1 else 0
+					result := getWX2(g, sp.Player)
 
-		// 5) ssswX2(对应sososwX2)  Sum of opponents sosw2 * 2 对手的SOSW总和
-		for r := 0; r < numberOfRoundsToCompute; r++ {
-			for _, sp := range t.hmScoredPlayers {
-				sososwX2 := 0
-				for rr := 0; rr <= r; rr++ {
-					//！！ 只有选手在该轮次下处于匹配状态的时候才需要进行ssswX2的计算
-					if sp.GetParticipation(rr) != PAIRED {
-						sososwX2 += 0
-					} else {
-						g := sp.GetGame(rr)
-						// 计算对手分
-						opp := NewPlayer()
-						if g.GetWhitePlayer().HasSameKeyString(sp.Player) {
-							opp = g.GetBlackPlayer()
-						} else {
-							opp = g.GetWhitePlayer()
-						}
-						sOpp := t.hmScoredPlayers[opp.GetKeyString()]
-						sososwX2 += sOpp.GetSOSWX2(r)
+					sOpp := t.hmScoredPlayers[opp.GetKeyString()]
+					oswX2[rr] = sOpp.GetNBWX2(r)    // 对手的总分
+					doswX4[rr] = oswX2[rr] * result // 对手的总分*result
+				}
+			}
+			// 计算 soswM2X2，sdswX4
+			sosX2 := 0
+			sdsX4 := 0
+			// 为什么要再开一个循环？？
+			for rr := 0; rr <= r; rr++ {
+				sosX2 += oswX2[rr]
+				sdsX4 += doswX4[rr]
+			}
+			sp.SetSOSWX2(r, sosX2)
+			sp.SetSDSWX4(r, sdsX4)
+
+			sosM1X2 := 0
+			sosM2X2 := 0
+			// soswM1X2 Sum of (n-1) Opponents nbw2 上一轮对手大分总和
+			// soswM2X2 Sum of (n-2) Opponents nbw2 上上轮对手大分总和
+
+			if r == 0 {
+				sosM1X2 = 0
+				sosM2X2 = 0
+			} else if r == 1 {
+				sosM1X2 = max(oswX2[0], oswX2[1]) // oswX2>0 sosM1X2=oswX2 else sosM1X2=0
+				sosM2X2 = 0
+			} else {
+				rMin := 0
+				for rr := 1; rr <= r; rr++ {
+					if oswX2[rr] < oswX2[rMin] {
+						rMin = rr
 					}
 				}
-				sp.SetSSSWX2(r, sososwX2)
+				rMin2 := 0
+				if rMin == 0 {
+					rMin2 = 1
+				}
+				for rr := 0; rr <= r; rr++ {
+					if rr == rMin {
+						continue
+					}
+					if oswX2[rr] < oswX2[rMin2] {
+						rMin2 = rr
+					}
+				}
+				// 一顿看不懂的操作之后，获取到了上轮的对手总分，和上上轮对手的总分
+				sosM1X2 = sp.GetSOSWX2(r) - oswX2[rMin]
+				sosM2X2 = sosM1X2 - oswX2[rMin2]
 			}
+			sp.SetSOSWM1X2(r, sosM1X2)
+			sp.SetSOSWM2X2(r, sosM2X2)
+		}
+	}
+
+	// 5) ssswX2(对应sososwX2)  Sum of opponents sosw2 * 2 对手的SOSW总和
+	for r := 0; r < numberOfRoundsToCompute; r++ {
+		for _, sp := range t.hmScoredPlayers {
+			sososwX2 := 0
+			for rr := 0; rr <= r; rr++ {
+				//！！ 只有选手在该轮次下处于匹配状态的时候才需要进行ssswX2的计算
+				if sp.GetParticipation(rr) != PAIRED {
+					sososwX2 += 0
+				} else {
+					g := sp.GetGame(rr)
+					// 计算对手分
+					opp := NewPlayer()
+					if g.GetWhitePlayer().HasSameKeyString(sp.Player) {
+						opp = g.GetBlackPlayer()
+					} else {
+						opp = g.GetWhitePlayer()
+					}
+					sOpp := t.hmScoredPlayers[opp.GetKeyString()]
+					sososwX2 += sOpp.GetSOSWX2(r)
+				}
+			}
+			sp.SetSSSWX2(r, sososwX2)
 		}
 	}
 }

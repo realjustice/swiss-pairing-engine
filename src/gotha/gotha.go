@@ -57,7 +57,7 @@ func (g *Gotha) ImportFromBytes(bs []byte) error {
 func (g *Gotha) ImportFromReader(io io.Reader) error {
 	gothaIO := NewInputOutput()
 	g.IO = gothaIO
-	gothaIO.WithOption(WithPlayers(), WithGames())
+	gothaIO.WithOption(WithPlayers(), WithGames(), WithByePlayers())
 	g.tournament = NewTournament()
 	return g.IO.ImportFromReader(io, g.tournament)
 }

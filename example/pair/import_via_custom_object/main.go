@@ -23,7 +23,7 @@ func main() {
 
 	blackKeyStrings, whiteKeyStrings := make([]string, 0), make([]string, 0)
 
-	for i := 0; i < 400; i++ {
+	for i := 0; i < 3; i++ {
 		player := gotha.NewPlayer()
 		player.SetName(getRandName(8))
 		player.SetFirstName(getRandName(5) + "")
@@ -32,7 +32,7 @@ func main() {
 		} else {
 			whiteKeyStrings = append(whiteKeyStrings, strings.ToUpper(player.Name+player.FirstName))
 		}
-		player.SetParticipatingStr("111111111111111") // 是否参与每一轮的编排
+		player.SetParticipatingStr("111") // 是否参与每一轮的编排
 		player.SetRank(getRandScore())
 		tournament.AddPlayer(player)
 	}
