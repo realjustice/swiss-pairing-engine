@@ -47,7 +47,6 @@ func (w *WeightedMatchLong) WeightedMatchLong(costs [][]int64, minimizeWeight bo
 
 	// W1. Initialize.
 	w.initialize(costs, minimizeWeight)
-	count := 0
 	for {
 		// W2. Start a new search.
 		w.delta = 0
@@ -114,11 +113,6 @@ func (w *WeightedMatchLong) WeightedMatchLong(costs [][]int64, minimizeWeight bo
 		g := w.oppEdge(w.e)
 		w.rematch(w.bend(w.e), g)
 		w.rematch(w.bend(g), w.e)
-		count++
-		if count == 83 {
-			a := 10000
-			a--
-		}
 	}
 }
 
