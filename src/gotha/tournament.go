@@ -1,8 +1,10 @@
 package gotha
 
 import (
+	"fmt"
 	weighted_match_long "github.com/realjustice/maximum_weight_matching/src"
 	"github.com/realjustice/swiss-pairing-engine/src/parameter_set"
+	"github.com/realjustice/swiss-pairing-engine/src/weight"
 	"math"
 	"sort"
 	"strings"
@@ -798,7 +800,15 @@ func (t *Tournament) pairAGroup(alGroupedPlayers []*Player, roundNumber int, alP
 	}
 
 	//mate := make([]int, 0)
-	w := weighted_match_long.NewWeightedMatchLong()
+	w := weight.NewWeightedMatchLong()
+	var total int64
+	for _, v1 := range costs {
+		for _, v2 := range v1 {
+			total += v2
+		}
+	}
+	fmt.Println(total)
+
 	mate := w.WeightedMatchLong(costs, weighted_match_long.MAXIMIZE)
 	alG := make([]*Game, 0)
 

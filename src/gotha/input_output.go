@@ -80,7 +80,6 @@ func (i *InputOutput) ImportFromReader(ri io.Reader, t *Tournament) error {
 			t.AddPlayer(p)
 		}
 	}
-
 	if i.bByePlayer {
 		i.importByePlayersFromXML(t)
 	}
@@ -149,8 +148,8 @@ func (i *InputOutput) importGamesFromXML(tournament *Tournament) (games []*Game,
 			return games, err
 		}
 		g.setRoundNumber(roundNumber - 1)
-		g.SetBlackPlayer(tournament.GetPlayerByKeyString(gameXML.SelectAttrValue("blackPlayer", "")))
-		g.SetWhitePlayer(tournament.GetPlayerByKeyString(gameXML.SelectAttrValue("whitePlayer", "")))
+		g.SetBlackPlayer(tournament.GetPlayerByKeyString(strings.ToUpper(gameXML.SelectAttrValue("blackPlayer", ""))))
+		g.SetWhitePlayer(tournament.GetPlayerByKeyString(strings.ToUpper(gameXML.SelectAttrValue("whitePlayer", ""))))
 		g.SetKnownColor(true)
 		g.SetResult(SelectResult(gameXML.SelectAttrValue("result", "")))
 		g.SetTableNumber(tableNumber - 1)

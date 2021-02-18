@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/realjustice/swiss-pairing-engine/src/gotha"
-	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -24,7 +23,7 @@ func main() {
 	// Step2 import the data resource
 	// you can import from the xml file
 	//pwd, _ := os.Getwd()
-	filePath := `/Users/justice/Desktop/ssss1610103656.xml` //  your file path
+	filePath := `/Users/justice/Desktop/tour_43_all.xml` //  your file path
 	importFromXMLFile(filePath, g)
 
 	// or from bytes
@@ -35,6 +34,7 @@ func main() {
 
 	g.SelectSystem(*system)
 	t := g.GetTournament()
+	t.GetTournamentSet().GetGeneralParameterSet().SetNumberOfRounds(10)
 
 	// Step4 choose the players （via keyString）
 	// By default, all players participate in this round
@@ -48,24 +48,23 @@ func main() {
 		newGames = append(newGames, game)
 		return false
 	})
-	return
 
 	//  Step6 you will get a io.reader
-	rd, err := g.IO.FlushGameToXML(newGames)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// overwrite your xml file (Optional operation)
-	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_TRUNC, 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer func() { _ = file.Close() }()
-	_, err = io.Copy(file, rd)
-	if err != nil {
-		log.Fatal(err)
-	}
+	//rd, err := g.IO.FlushGameToXML(newGames)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//
+	//// overwrite your xml file (Optional operation)
+	//file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_TRUNC, 0644)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//defer func() { _ = file.Close() }()
+	//_, err = io.Copy(file, rd)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
 }
 
 func importFromXMLFile(filePath string, g *gotha.Gotha) {
