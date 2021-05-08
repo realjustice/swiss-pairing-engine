@@ -415,16 +415,16 @@ func (w *WeightedMatchLong) rematch(firstMate int, e int) {
 		// R3. Get next edge.
 		e = w.nextE
 		w.f = w.oppEdge(e)
-		firstMate := w.bend(e)
-		secondMate := w.bend(w.f)
+		firstMate = w.bend(e)
+		w.secondMate = w.bend(w.f)
 		w.nextE = -w.link[firstMate]
 
 		// R4. Relink and rematch.
-		w.link[firstMate] = -w.mate[secondMate]
-		w.link[secondMate] = -w.mate[firstMate]
+		w.link[firstMate] = -w.mate[w.secondMate]
+		w.link[w.secondMate] = -w.mate[firstMate]
 
 		w.mate[firstMate] = w.f
-		w.mate[secondMate] = e
+		w.mate[w.secondMate] = e
 	}
 }
 
