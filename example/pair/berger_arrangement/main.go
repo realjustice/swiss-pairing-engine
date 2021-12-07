@@ -17,7 +17,7 @@ func main() {
 		player := gotha.NewPlayer()
 		player.SetName(strconv.Itoa(i))
 		player.SetRank(getRandScore())
-		tournament.AddPlayer(player)
+		tournament.AddSelectedPlayer(player) // 根据导入的顺序直接排序
 	}
 
 	tournament.BergerArrange().Walk(func(game *gotha.Game) (isStop bool) {

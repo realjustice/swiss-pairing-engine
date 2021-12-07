@@ -86,6 +86,11 @@ func (t *Tournament) AddPlayer(p *Player) {
 	//t.selectedPlayers = append(t.selectedPlayers, p)
 }
 
+func (t *Tournament) AddSelectedPlayer(p *Player) {
+	t.AddPlayer(p)
+	t.selectedPlayers = append(t.selectedPlayers, p)
+}
+
 func (t *Tournament) AddGame(g *Game) bool {
 	if g == nil {
 		return false
