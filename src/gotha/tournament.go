@@ -1216,7 +1216,7 @@ func (t *Tournament) ChooseAByePlayer(alPlayers []*Player, roundNumber int) {
 				weightForBye += 1000
 			}
 		}
-		if weightForBye < minWeight {
+		if weightForBye <= minWeight {
 			minWeight = weightForBye
 			bestPlayerForBye = p
 		}
