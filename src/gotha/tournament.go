@@ -356,6 +356,8 @@ func (t *Tournament) MakeAutomaticPairing(roundNumber int) ([]*Game, bool) {
 func (t *Tournament) Pair(roundNumber int) *GameIterator {
 	if t.selectedPlayers == nil {
 		t.selectedPlayers = getSelectedPlayerFromSPs(t.orderScoredPlayersList(roundNumber))
+	} else {
+		t.selectedPlayers = getSelectedPlayerFromSPs(t.orderSelectedPlayer(roundNumber))
 	}
 	roundNumber--
 	if len(t.selectedPlayers)%2 != 0 {
@@ -380,7 +382,6 @@ func (t *Tournament) Pair(roundNumber int) *GameIterator {
 	tN := 0
 	for _, g := range alNewGames {
 		stop := true
-
 		f := func() {
 			stop = true
 			oldGames := t.gamesList(roundNumber)
@@ -483,6 +484,29 @@ func (t *Tournament) orderScoredPlayersList(roundNumber int) ScoredPlayers {
 	spc := NewScoredPlayerComparator(alOrderedScoredPlayers, primaryCrit, roundNumber)
 	sort.Sort(spc)
 	return alOrderedScoredPlayers
+}
+
+func (t *Tournament) orderSelectedPlayer(roundNumber int) ScoredPlayers {
+	roundNumber--
+	t.fillBaseScoringInfoIfNecessary()
+	crit := t.tournamentParameterSet.GetPlacementParameterSet().GetPlaCriteria()
+	primaryCrit := make([]int, len(crit))
+	for iC := 0; iC < len(crit); iC++ {
+		primaryCrit[iC] = crit[iC]
+	}
+	alOrderedScoredPlayers := t.getScoredPlayers()
+	newAlOrderedScoredPlayers := make(ScoredPlayers, 0)
+	for _, v := range t.selectedPlayers {
+		for _, v2 := range alOrderedScoredPlayers {
+			if v.keyString == v2.keyString {
+				newAlOrderedScoredPlayers = append(newAlOrderedScoredPlayers, v2)
+			}
+		}
+	}
+
+	spc := NewScoredPlayerComparator(newAlOrderedScoredPlayers, primaryCrit, roundNumber)
+	sort.Sort(spc)
+	return newAlOrderedScoredPlayers
 }
 
 func getSelectedPlayerFromSPs(sps ScoredPlayers) []*Player {
