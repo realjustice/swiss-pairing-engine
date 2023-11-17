@@ -63,21 +63,19 @@ func compareTo(a string, b string) int {
 	// 将两个字符串变成等长的char数组
 	charA := []byte(a)
 	charB := []byte(b)
+
+	// 使用strings.Repeat来填充字符串到相同长度
 	if len(a) < len(b) {
-		for len(b) > len(a) {
-			charA = append(charA, 0)
-		}
+		charA = append(charA, make([]byte, len(b)-len(a))...)
 	} else if len(a) > len(b) {
-		for len(a) > len(b) {
-			charB = append(charB, 0)
-		}
+		charB = append(charB, make([]byte, len(a)-len(b))...)
 	}
 
 	// 之后比较
-	for i := 0; i < len(a); i++ {
-		if a[i] > b[i] {
+	for i := 0; i < len(charA); i++ { // 使用扩展后的字符数组长度
+		if charA[i] > charB[i] {
 			return 1
-		} else if a[i] < b[i] {
+		} else if charA[i] < charB[i] {
 			return -1
 		}
 	}
