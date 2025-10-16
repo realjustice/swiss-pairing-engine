@@ -2,12 +2,13 @@ package gotha
 
 import (
 	"fmt"
-	weighted_match_long "github.com/realjustice/maximum_weight_matching/src"
-	"github.com/realjustice/swiss-pairing-engine/src/parameter_set"
-	"github.com/realjustice/swiss-pairing-engine/src/weight"
 	"math"
 	"sort"
 	"strings"
+
+	weighted_match_long "github.com/realjustice/maximum_weight_matching/src"
+	"github.com/realjustice/swiss-pairing-engine/src/parameter_set"
+	"github.com/realjustice/swiss-pairing-engine/src/weight"
 )
 
 type Tournament struct {
@@ -113,20 +114,21 @@ func (t *Tournament) FillPairingInfo(roundNumber int) {
 	pps := t.tournamentParameterSet.GetPlacementParameterSet()
 	paiPs := t.tournamentParameterSet.GetPairingParameterSet()
 	mainCrit := pps.MainCriterion()
-	mainScoreMin := 0
-	mainScoreMax := roundNumber
-	groupNumber := 0 // group 的数量（比如第四轮结束一共有大分 8分，6分，4分，2分，0分的五类选手，则分为5个小组）
+	mainScoreMinX2 := 0
+	mainScoreMaxX2 := roundNumber * 2 // 使用积分×2，支持半分
+	groupNumber := 0                  // group 的数量（比如第四轮结束一共有大分 8分，6分，4分，2分，0分的五类选手，则分为5个小组）
 
 	for cat := 0; cat < gps.GetNumberOfCategories(); cat++ {
-		for mainScore := mainScoreMax; mainScore >= mainScoreMin; mainScore-- {
+		// 从最高分到最低分，以0.5分为步长（即积分×2以1为步长）
+		for mainScoreX2 := mainScoreMaxX2; mainScoreX2 >= mainScoreMinX2; mainScoreX2-- {
 			alSPGroup := make([]*ScoredPlayer, 0)
 			for _, sp := range t.hmScoredPlayers {
 				if sp.Category(gps) != cat {
 					continue
 				}
-				// 获取到本轮为止的全胜人员
-				// 第一轮为全体选手
-				if sp.GetCritValue(mainCrit, roundNumber-1)/2 != mainScore {
+				// 获取到本轮为止的积分×2值，直接比较，不使用除法
+				// 这样可以支持半分（0.5分对应1，1.0分对应2，1.5分对应3等）
+				if sp.GetCritValue(mainCrit, roundNumber-1) != mainScoreX2 {
 					continue
 				}
 
@@ -288,8 +290,8 @@ func (t *Tournament) MakeAutomaticPairing(roundNumber int) ([]*Game, bool) {
 	// todo getGamesListBefore()
 	alPreviousGames := t.gamesListBefore(roundNumber)
 
-	mainScoreMin := 0
-	mainScoreMax := roundNumber
+	mainScoreMinX2 := 0
+	mainScoreMaxX2 := roundNumber * 2 // 使用积分×2，支持半分
 
 	alRemainingPlayers := make([]*Player, len(alPlayersToPair))
 	copy(alRemainingPlayers, alPlayersToPair)
@@ -305,14 +307,16 @@ func (t *Tournament) MakeAutomaticPairing(roundNumber int) ([]*Game, bool) {
 		alGroupedPlayers.data = make([]*Player, 0)
 
 		for cat := 0; cat < gps.GetNumberOfCategories(); cat++ {
-			for mainScore := mainScoreMax; mainScore >= mainScoreMin; mainScore-- {
+			// 从最高分到最低分，以0.5分为步长（即积分×2以1为步长）
+			for mainScoreX2 := mainScoreMaxX2; mainScoreX2 >= mainScoreMinX2; mainScoreX2-- {
 				for it := NewPlayerIterator(&alRemainingPlayers); it.HasNext(); {
 					p := it.Next()
 					if p.Category(gps) > cat {
 						continue
 					}
 					sp := t.hmScoredPlayers[p.GetKeyString()]
-					if sp.GetCritValue(mainCrit, roundNumber-1)/2 < mainScore {
+					// 使用积分×2值直接比较，支持半分
+					if sp.GetCritValue(mainCrit, roundNumber-1) < mainScoreX2 {
 						continue
 					}
 					alGroupedPlayers.data = append(alGroupedPlayers.data, p)
@@ -836,7 +840,10 @@ func (t *Tournament) pairAGroup(alGroupedPlayers []*Player, roundNumber int, alP
 			total += v2
 		}
 	}
-	fmt.Println(total)
+	fmt.Println("权重总和:", total)
+
+	// 打印权重矩阵
+	t.printCostMatrix(costs, alGroupedPlayers, roundNumber)
 
 	mate := w.WeightedMatchLong(costs, weighted_match_long.MAXIMIZE)
 	alG := make([]*Game, 0)
@@ -853,6 +860,53 @@ func (t *Tournament) pairAGroup(alGroupedPlayers []*Player, roundNumber int, alP
 	}
 
 	return alG
+}
+
+func (t *Tournament) printCostMatrix(costs [][]int64, players []*Player, roundNumber int) {
+	n := len(players)
+	if n == 0 {
+		return
+	}
+
+	fmt.Println("\n" + strings.Repeat("=", 100))
+	fmt.Printf("第%d轮权重矩阵 (单位: 10^10)\n", roundNumber+1)
+	fmt.Println(strings.Repeat("=", 100))
+
+	// 打印选手信息和积分
+	fmt.Println("\n选手列表:")
+	for i, p := range players {
+		sp := t.hmScoredPlayers[p.GetKeyString()]
+		score := float64(sp.GetCritValue(parameter_set.PLA_CRIT_NBW, roundNumber-1)) / 2.0
+		fmt.Printf("  [%d] %s %s (积分: %.1f, Group: %d, Pos: %d)\n",
+			i, p.Name, p.FirstName, score, sp.GroupNumber, sp.InnerPlacement)
+	}
+
+	// 打印矩阵表头
+	fmt.Println("\n权重矩阵 (除以10^10显示):")
+	fmt.Print("     ")
+	for i := 0; i < n; i++ {
+		fmt.Printf("[%d]%9s ", i, players[i].Name[:min(len(players[i].Name), 8)])
+	}
+	fmt.Println()
+	fmt.Println(strings.Repeat("-", 15+n*20))
+
+	// 打印矩阵内容
+	for i := 0; i < n; i++ {
+		fmt.Printf("[%d]%-8s ", i, players[i].Name[:min(len(players[i].Name), 8)])
+		for j := 0; j < n; j++ {
+			if i == j {
+				fmt.Printf("%13s ", "-")
+			} else {
+				// 转换为10^10为单位显示
+				value := float64(costs[i][j]) / 1e10
+				fmt.Printf("%13.4f ", value)
+			}
+		}
+		fmt.Println()
+	}
+
+	fmt.Println(strings.Repeat("=", 100))
+	fmt.Println()
 }
 
 func (t *Tournament) costValue(sP1 *ScoredPlayer, sP2 *ScoredPlayer, roundNumber int, alPreviousGames []*Game) int64 {
