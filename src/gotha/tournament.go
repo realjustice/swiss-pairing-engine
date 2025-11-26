@@ -840,10 +840,10 @@ func (t *Tournament) pairAGroup(alGroupedPlayers []*Player, roundNumber int, alP
 			total += v2
 		}
 	}
-	fmt.Println("权重总和:", total)
+	// fmt.Println("权重总和:", total)
 
-	// 打印权重矩阵
-	t.printCostMatrix(costs, alGroupedPlayers, roundNumber)
+	// // 打印权重矩阵
+	// t.printCostMatrix(costs, alGroupedPlayers, roundNumber)
 
 	mate := w.WeightedMatchLong(costs, weighted_match_long.MAXIMIZE)
 	alG := make([]*Game, 0)
